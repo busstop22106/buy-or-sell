@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://buy-or-sell.netlify.app/sitemap.xml
