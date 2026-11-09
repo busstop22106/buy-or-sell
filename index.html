@@ -138,22 +138,9 @@
     background:var(--chip); border-radius:12px; padding:16px; font-size:14px; margin-bottom:16px;
   }
   .context-box b{color:var(--ink)}
-  .context-box .sector-line{margin-top:8px}
-  .context-box .sector-line b{color:var(--primary)}
-
-  /* ---------- Settings (난이도) ---------- */
-  .settings{margin-top:20px; padding-top:20px; border-top:1px solid var(--border-soft)}
-  .set-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
-  .set-row + .set-row{margin-top:14px}
-  .set-label{font-size:14px; font-weight:700; color:var(--ink); flex:none}
-  .seg{display:inline-flex; background:var(--chip); border-radius:12px; padding:4px; gap:4px; flex-wrap:wrap}
-  .seg button{
-    border:none; background:transparent; color:var(--body); font-size:14px; font-weight:600;
-    padding:8px 16px; border-radius:9px; display:inline-flex; align-items:center; gap:7px;
-    transition:all .2s cubic-bezier(.16,1,.3,1); -webkit-tap-highlight-color:transparent;
-  }
-  .seg button.on{background:var(--card); color:var(--ink); box-shadow:var(--shadow)}
-  .set-desc{margin:8px 0 0}
+  .hint-area{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .btn-hint{height:40px; padding:0 18px; font-size:14px}
+  .hint-area .hint-note{font-size:13px; color:var(--muted)}
 
   .chart-head{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline; justify-content:space-between; margin-bottom:8px}
   .chart-price{font-size:24px; font-weight:800; color:var(--ink); line-height:1.2}
@@ -336,9 +323,6 @@
     .start-row .btn{width:100%; height:54px; font-size:16px}
     .start-row .caption{text-align:center}
     .note-line{margin-top:14px; font-size:12px; line-height:1.55}
-    .settings{margin-top:16px; padding-top:16px}
-    .seg{display:flex; width:100%}
-    .seg button{flex:1; justify-content:center; padding:10px 6px; font-size:13.5px}
     .daily-row{flex-direction:column; align-items:stretch}
     .daily-row .btn{width:100%; height:52px; font-size:16px}
     .daily-row .caption{text-align:center}
@@ -406,18 +390,7 @@
         <span class="caption">10개 종목 · 날짜가 다른 문제 20개 중 랜덤 10문제</span>
       </div>
       <p class="caption note-line">차트는 Yahoo Finance의 실제 일봉 데이터(시가·고가·저가·종가·거래량)를 그대로 사용했습니다. 정답은 선택 시점 종가 대비 20거래일 뒤 종가의 방향으로 판정합니다.</p>
-      <div class="settings">
-        <div class="set-row">
-          <span class="set-label">난이도</span>
-          <div class="seg" id="seg-diff" role="group" aria-label="난이도 선택">
-            <button type="button" data-diff="easy">쉬움</button>
-            <button type="button" data-diff="normal">보통</button>
-            <button type="button" data-diff="hard">어려움</button>
-          </div>
-        </div>
-        <p class="caption set-desc" id="diff-desc"></p>
-        <p class="caption set-desc">선택한 난이도는 이 기기에 저장돼요. 오늘의 퀴즈는 모두에게 같은 조건인 보통 난이도로 고정됩니다.</p>
-      </div>
+      <p class="caption note-line">가격과 당시 상황은 처음엔 가려져 있어요. 궁금한 문제에서는 '힌트보기'로 공개할 수 있고, 힌트는 10문제당 3번까지만 쓸 수 있습니다.</p>
     </div>
     <div class="card daily-card fade-in" id="daily-card">
       <div class="daily-top">
@@ -426,7 +399,7 @@
       </div>
       <p class="daily-desc" id="daily-desc">오늘의 문제를 불러오는 중입니다.</p>
       <div class="daily-row">
-        <button class="btn btn-primary" id="btn-daily" type="button">오늘의 퀴즈 풀기</button>
+        <button class="btn btn-ghost" id="btn-daily" type="button">오늘의 퀴즈 풀기 · 1문제</button>
         <span class="caption" id="daily-note">매일 자정에 새 문제 · 하루 한 번만 풀 수 있어요</span>
       </div>
     </div>
@@ -474,7 +447,7 @@
     <div class="card fade-in" id="quiz-card">
       <div class="context-box" id="context-box"></div>
       <div class="chart-head">
-        <div>
+        <div id="chart-price-wrap">
           <div class="chart-price"><span id="chart-price">—</span> <span class="unit" id="chart-unit"></span></div>
           <div class="caption" id="chart-date">기준일 —</div>
         </div>
@@ -513,7 +486,7 @@
       <p class="caption" id="share-preview" style="margin-top:16px"></p>
       <div class="battle-box" id="battle-box">
         <h3>친구에게 도전장 보내기</h3>
-        <p class="desc">방금 푼 바로 그 10문제를 친구도 같은 순서·같은 난이도로 풀게 돼요. 친구가 다 풀면 둘의 점수를 나란히 비교하는 화면이 열립니다. 순위는 재미용으로만 보여주고, 공식 순위는 아래 리더보드에 따로 등록돼요.</p>
+        <p class="desc">방금 푼 바로 그 10문제를 친구도 같은 순서로 풀게 돼요. 친구가 다 풀면 둘의 점수를 나란히 비교하는 화면이 열립니다. 순위는 재미용으로만 보여주고, 공식 순위는 아래 리더보드에 따로 등록돼요.</p>
         <div class="lb-form">
           <input class="lb-input" id="battle-nickname" type="text" maxlength="12" placeholder="내 닉네임 (최대 12자)" autocomplete="off" />
         </div>
@@ -571,7 +544,7 @@
         <button class="btn btn-primary" id="btn-battle-accept" type="button">도전 수락하기 · 같은 10문제 풀기</button>
         <button class="btn btn-ghost" id="btn-battle-home" type="button">퀴즈 소개 보기</button>
       </div>
-      <p class="caption" style="margin-top:16px">도전자가 푼 문제 세트와 순서, 난이도가 그대로 적용됩니다. 다 풀면 결과 화면에서 둘의 점수를 나란히 비교해 드려요.</p>
+      <p class="caption" style="margin-top:16px">도전자가 푼 문제 세트와 순서가 그대로 적용됩니다. 다 풀면 결과 화면에서 둘의 점수를 나란히 비교해 드려요.</p>
     </div>
     <div class="card" style="margin-top:16px">
       <h2>어떻게 진행되나요?</h2>
@@ -648,56 +621,20 @@ POOL.forEach(function(q, i){
 });
 var QUIZZES = POOL.slice(0, 10);
 
-/* ---------------- 난이도 설정 ----------------
-   난이도는 힌트 유무와 차트 기간으로 나뉜다. 쉬움=분야 힌트+45일, 보통=힌트 없음+45일(기존 방식),
-   어려움=힌트 없음+30일. 오늘의 퀴즈는 날짜 시드 공정성을 위해 항상 보통으로 고정한다.
-   선택은 localStorage에 저장한다. 리더보드에는 난이도를 기록하지 않는다(점수만). */
-var DIFFS = {
-  easy:   { key: "easy",   label: "쉬움",   pre: 45, hint: true,  desc: "쉬움 · 종목 분야 힌트를 보여줘요 · 차트는 최근 45거래일" },
-  normal: { key: "normal", label: "보통",   pre: 45, hint: false, desc: "보통 · 힌트 없이 최근 45거래일 차트만 보고 판단해요" },
-  hard:   { key: "hard",   label: "어려움", pre: 30, hint: false, desc: "어려움 · 힌트 없이 최근 30거래일 차트만 보여줘요. 정보가 적어 더 어렵습니다" }
-};
-/* 분야 힌트 — 종목 데이터의 국가·섹터 정보. 종목명은 아니지만 분야는 알려주는 쉬움 전용 힌트 */
-var SECTORS = {
-  "NVDA": "미국 · 반도체 (AI 칩)",
-  "META": "미국 · 플랫폼 · 소셜미디어",
-  "TSLA": "미국 · 전기차",
-  "MSFT": "미국 · 소프트웨어 · 클라우드",
-  "AAPL": "미국 · IT 기기 (스마트폰)",
-  "005930.KS": "한국 · 반도체",
-  "000660.KS": "한국 · 반도체",
-  "035420.KS": "한국 · 인터넷 플랫폼",
-  "035720.KS": "한국 · 플랫폼 · 콘텐츠",
-  "005380.KS": "한국 · 자동차"
-};
-var DIFF_KEY = "bos_difficulty", THEME_KEY = "bos_theme";
-var currentDiff = "normal";
-(function loadSettings(){
+/* ---------------- 힌트 방식 통일 ----------------
+   난이도 선택은 없앴다. 모든 퀴즈는 보통 방식(45거래일 차트)으로 진행하고,
+   가격(상단 헤더·Y축 라벨)과 당시 상황은 처음엔 가려 둔다. 문제마다 '힌트보기'를
+   누르면 그 문제의 가격·상황이 공개되며, 힌트는 퀴즈 1회당 총 3회(데일리는 1회)까지만
+   쓸 수 있다. 힌트 사용은 정답 판정·점수에 영향을 주지 않는다. */
+(function cleanupOldSettings(){
+  /* 예전 난이도·테마 선택 기능의 localStorage 잔재 정리 */
   try {
-    var d = localStorage.getItem(DIFF_KEY);
-    if (d && DIFFS[d]) currentDiff = d;
-    /* 예전 테마 선택 기능의 잔재 정리 — 테마는 기본 색 하나로 고정한다 */
-    localStorage.removeItem(THEME_KEY);
+    localStorage.removeItem("bos_difficulty");
+    localStorage.removeItem("bos_theme");
   } catch (e) {}
   document.documentElement.removeAttribute("data-theme");
 })();
-function saveSetting(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
-function applyDiffUI(){
-  var btns = document.querySelectorAll("#seg-diff button");
-  for (var i = 0; i < btns.length; i++){
-    btns[i].classList.toggle("on", btns[i].getAttribute("data-diff") === currentDiff);
-  }
-  var desc = document.getElementById("diff-desc");
-  if (desc) desc.textContent = DIFFS[currentDiff].desc;
-}
-function setDifficulty(key, silent){
-  if (!DIFFS[key]) return;
-  currentDiff = key;
-  saveSetting(DIFF_KEY, key);
-  applyDiffUI();
-  if (!silent) trackEvent("difficulty_select", { difficulty: key });
-}
-var state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", diff: "normal", preShown: PRE, startIdx: 0 };
+var state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false };
 
 function $(id){ return document.getElementById(id); }
 function fmtPrice(v, q){
@@ -759,11 +696,12 @@ function buildChart(q, visibleCount){
   var ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#0F172A";
 
   var s = '<svg class="chart-svg" viewBox="0 0 ' + CW + ' ' + CH + '" role="img" aria-label="일봉 캔들차트와 거래량">';
-  // grid + price labels
+  // grid + price labels — 가격 라벨은 힌트를 썼거나 이미 답한 뒤에만 그린다
+  var showPrices = !state || state.hintUsed || state.revealed;
   for (var g = 0; g <= D.gridSteps; g++){
     var p = min + (max - min) * g / D.gridSteps, y = Y(p);
     s += '<line x1="' + PADL + '" y1="' + y + '" x2="' + (CW - PADR) + '" y2="' + y + '" stroke="' + grid + '" stroke-width="1"/>';
-    s += '<text x="' + (CW - PADR + 5) + '" y="' + (y + 4) + '" font-size="' + D.fs + '" fill="' + mut + '">' + fmtPrice(p, q) + '</text>';
+    if (showPrices) s += '<text x="' + (CW - PADR + 5) + '" y="' + (y + 4) + '" font-size="' + D.fs + '" fill="' + mut + '">' + fmtPrice(p, q) + '</text>';
   }
   // volume baseline
   s += '<line x1="' + PADL + '" y1="' + (PADT + PH + GAP + VH) + '" x2="' + (CW - PADR) + '" y2="' + (PADT + PH + GAP + VH) + '" stroke="' + grid + '"/>';
@@ -855,11 +793,36 @@ function buildFullSet(seed){
 function startQuiz(seedOpt){
   var seed = (typeof seedOpt === "number" && isFinite(seedOpt)) ? (seedOpt >>> 0) : newBattleSeed();
   QUIZZES = buildFullSet(seed);
-  var d = DIFFS[currentDiff] || DIFFS.normal;
-  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: d.pre, mode: "full", diff: d.key, preShown: d.pre, startIdx: PRE - d.pre, seed: seed, battle: null, battleTracked: false };
-  trackEvent("quiz_start", { question_count: QUIZZES.length, difficulty: d.key });
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, seed: seed, battle: null, battleTracked: false, hintsLeft: 3, hintUsed: false };
+  trackEvent("quiz_start", { question_count: QUIZZES.length });
   showScreen("quiz");
   loadQuestion();
+}
+
+/* 힌트 영역 — 상황 박스가 있던 자리에 힌트보기 버튼을 두고, 클릭하면 그 자리에
+   당시의 상황 박스가 나타나며 가격 헤더와 Y축 라벨도 함께 공개된다. */
+function renderHintArea(q){
+  var box = $("context-box");
+  if (state.hintUsed){
+    box.innerHTML = "<b>당시의 상황</b> · " + q.hint;
+    return;
+  }
+  if (state.hintsLeft > 0){
+    box.innerHTML = '<div class="hint-area"><button class="btn btn-ghost btn-hint" id="btn-hint" type="button">힌트보기 (남은 ' + state.hintsLeft + '회)</button><span class="hint-note">힌트를 쓰면 당시 상황과 1주당 가격이 공개돼요</span></div>';
+    $("btn-hint").addEventListener("click", useHint);
+  } else {
+    box.innerHTML = '<div class="hint-area"><button class="btn btn-ghost btn-hint" type="button" disabled>힌트 소진</button><span class="hint-note">이번 퀴즈에서 쓸 수 있는 힌트를 모두 사용했어요</span></div>';
+  }
+}
+function useHint(){
+  if (state.revealed || state.hintUsed || state.hintsLeft <= 0) return;
+  state.hintsLeft--;
+  state.hintUsed = true;
+  var q = QUIZZES[state.idx];
+  trackEvent("hint_use", { question_number: state.idx + 1, hints_left: state.hintsLeft });
+  renderHintArea(q);
+  $("chart-price-wrap").classList.remove("hidden");
+  $("chart-host").innerHTML = buildChart(q, state.visible);
 }
 
 function loadQuestion(){
@@ -878,13 +841,13 @@ function loadQuestion(){
       banner.innerHTML = "";
     }
   }
-  $("hud-market").textContent = marketLabel(q) + " · 종목명 비공개" + (state.mode !== "daily" ? " · " + DIFFS[state.diff].label : "");
+  $("hud-market").textContent = marketLabel(q) + " · 종목명 비공개";
   var scoreWrap = $("hud-score-wrap");
   if (scoreWrap) scoreWrap.innerHTML = state.mode === "daily" ? "하루 한 문제" : '현재 <b id="hud-score">' + state.score + "</b>점";
   $("progress-bar").style.width = (state.idx / QUIZZES.length * 100) + "%";
-  var ctxHtml = "<b>당시의 상황</b> · " + q.hint;
-  if (DIFFS[state.diff].hint && SECTORS[q.sym]) ctxHtml += '<div class="sector-line"><b>분야 힌트</b> · ' + SECTORS[q.sym] + "</div>";
-  $("context-box").innerHTML = ctxHtml;
+  state.hintUsed = false;
+  renderHintArea(q);
+  $("chart-price-wrap").classList.add("hidden");
   $("chart-price").textContent = fmtPrice(q.base, q);
   $("chart-unit").textContent = q.cur === "$" ? "달러" : "원";
   $("chart-date").textContent = "기준일 " + q.decisionDate + " 종가 기준 · 최근 " + state.preShown + "거래일";
@@ -902,6 +865,7 @@ function loadQuestion(){
 function choose(pick){
   if (state.revealed) return;
   state.revealed = true;
+  $("chart-price-wrap").classList.remove("hidden");
   var q = QUIZZES[state.idx];
   var correct = pick === q.answer;
   state.answers[state.idx] = correct;
@@ -982,7 +946,7 @@ function renderDailyCard(){
   } else {
     desc.textContent = dateLabel + ", 오늘의 문제 1개가 기다리고 있어요. 같은 날엔 모두가 같은 종목을 같은 기준일로 풉니다. 오늘의 퀴즈는 내일 사라져요.";
     btn.disabled = false;
-    btn.textContent = "오늘의 퀴즈 풀기";
+    btn.textContent = "오늘의 퀴즈 풀기 · 1문제";
     if (note) note.textContent = "매일 자정에 새 문제 · 하루 한 번만 풀 수 있어요";
   }
 }
@@ -994,8 +958,8 @@ function startDaily(){
   }
   var q = POOL[dailyIndex()];
   QUIZZES = [q];
-  // 오늘의 퀴즈는 날짜 시드 공정성을 위해 선택한 난이도와 무관하게 보통(힌트 없음 · 45일)으로 고정
-  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "daily", diff: "normal", preShown: PRE, startIdx: 0, seed: null, battle: null, battleTracked: false };
+  // 오늘의 퀴즈는 날짜 시드로 모두가 같은 문제를 풀고, 힌트는 1회까지 쓸 수 있다
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "daily", preShown: PRE, startIdx: 0, seed: null, battle: null, battleTracked: false, hintsLeft: 1, hintUsed: false };
   trackEvent("daily_quiz_start", { symbol: q.sym, decision_date: q.decisionDate, date: todayStr() });
   showScreen("quiz");
   loadQuestion();
@@ -1439,7 +1403,7 @@ function copyLink(){
 }
 
 /* ---------------- 친구 대결 (?battle=<base64url>) ----------------
-   도전장 링크 하나에 도전자 닉네임·점수·칭호·난이도·문제 세트 시드를 담는다.
+   도전장 링크 하나에 도전자 닉네임·점수·칭호·문제 세트 시드를 담는다.
    백엔드 없이 링크만으로 같은 10문제를 같은 순서로 재현하고, 결과에서 점수를 비교한다.
    링크 파라미터는 누구나 만들 수 있으므로 대결 순위는 재미용으로만 표시하고
    공식 리더보드(Supabase)와는 분리한다. */
@@ -1461,7 +1425,6 @@ function battlePayloadFromState(nick){
     n: nick,
     s: state.score,
     r: meta ? meta.key : "",
-    d: DIFFS[state.diff] ? state.diff : "normal",
     seed: (typeof state.seed === "number" && isFinite(state.seed)) ? (state.seed >>> 0) : 0
   };
 }
@@ -1479,8 +1442,7 @@ function parseBattleParam(raw){
     if (isNaN(score) || score < 0 || score > 10) return null;
     var nick = String(o.n == null ? "" : o.n).trim().slice(0, 12) || "익명의 도전자";
     var rankKey = rankMetaByKey(o.r) ? o.r : (rankMetaFor(score) ? rankMetaFor(score).key : "");
-    var diff = DIFFS[o.d] ? o.d : "normal";
-    return { nick: nick, score: score, rankKey: rankKey, diff: diff, seed: seed >>> 0 };
+    return { nick: nick, score: score, rankKey: rankKey, seed: seed >>> 0 };
   } catch (e) { return null; }
 }
 function battleNickname(){
@@ -1545,7 +1507,7 @@ function showBattleLanding(b){
   pendingBattle = b;
   var meta = rankMetaByKey(b.rankKey) || rankMetaFor(b.score);
   $("battle-title").textContent = meta ? meta.title : "";
-  $("battle-line").textContent = b.nick + "님 · " + b.score + "점 / 10점 · " + DIFFS[b.diff].label + " 난이도";
+  $("battle-line").textContent = b.nick + "님 · " + b.score + "점 / 10점";
   $("battle-desc").textContent = b.nick + "님이 방금 10문제를 풀고 당신에게 도전장을 보냈어요. 같은 문제, 같은 순서로 풀고 " + b.score + "점을 넘을 수 있는지 겨뤄보세요.";
   showScreen("battle");
 }
@@ -1553,16 +1515,16 @@ function startBattleQuiz(){
   if (!pendingBattle) return;
   var b = pendingBattle;
   QUIZZES = buildFullSet(b.seed);
-  var d = DIFFS[b.diff] || DIFFS.normal;
   state = {
-    idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: d.pre,
-    mode: "battle", diff: d.key, preShown: d.pre, startIdx: PRE - d.pre,
+    idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE,
+    mode: "battle", preShown: PRE, startIdx: 0,
     seed: b.seed,
     battle: { nick: b.nick, score: b.score, rankKey: b.rankKey },
-    battleTracked: false
+    battleTracked: false,
+    hintsLeft: 3, hintUsed: false
   };
-  trackEvent("battle_play", { challenger_score: b.score, challenger_rank: b.rankKey, difficulty: d.key, seed: b.seed });
-  trackEvent("quiz_start", { question_count: QUIZZES.length, difficulty: d.key, mode: "battle" });
+  trackEvent("battle_play", { challenger_score: b.score, challenger_rank: b.rankKey, seed: b.seed });
+  trackEvent("quiz_start", { question_count: QUIZZES.length, mode: "battle" });
   showScreen("quiz");
   loadQuestion();
 }
@@ -1724,13 +1686,6 @@ window.addEventListener("orientationchange", function(){
 });
 
 $("btn-start").addEventListener("click", startQuiz);
-(function initSettings(){
-  applyDiffUI();
-  var db = document.querySelectorAll("#seg-diff button");
-  for (var i = 0; i < db.length; i++){
-    db[i].addEventListener("click", function(){ setDifficulty(this.getAttribute("data-diff")); });
-  }
-})();
 $("btn-daily").addEventListener("click", startDaily);
 renderDailyCard();
 $("btn-rank-start").addEventListener("click", function(){
