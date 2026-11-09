@@ -19,7 +19,7 @@
 <meta property="og:title" content="차트만 보고 매수? 매도? — 주식 매수·매도 퀴즈" />
 <meta property="og:description" content="종목명을 가린 실제 과거 차트 10문제. 당신은 몇 점일까요?" />
 <meta property="og:url" content="https://buy-or-sell.netlify.app/" />
-<meta property="og:image" content="https://buy-or-sell.netlify.app/assets/og-image.png" />
+<meta property="og:image" content="https://busstop22106.github.io/buy-or-sell/assets/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content="차트만 보고 매수? 매도? 주식 매수·매도 퀴즈" />
@@ -239,7 +239,8 @@
   .lb-name{font-weight:700; color:var(--ink); font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .lb-meta{font-size:12px; color:var(--muted)}
   .lb-me{display:inline-block; background:var(--primary); color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px; margin-left:6px; vertical-align:2px}
-  .lb-score{font-weight:800; color:var(--ink); font-size:16px; flex:none}
+  .lb-score{font-weight:800; color:var(--ink); font-size:16px; flex:none; white-space:nowrap}
+  .lb-hints{font-size:11px; font-weight:600; color:var(--muted); margin-left:5px}
   .lb-status{font-size:14px; color:var(--muted); padding:14px 4px 6px}
   .lb-my-note{margin:12px 0 0; font-size:13px; color:var(--muted)}
   .lb-my-note b{color:var(--primary)}
@@ -345,7 +346,7 @@
         <h2>리더보드</h2>
         <button class="btn btn-ghost lb-refresh" id="btn-lb-refresh" type="button">새로고침</button>
       </div>
-      <p class="lb-sub">10문제 퀴즈 점수를 등록한 사람들의 순위예요. 점수가 같으면 먼저 등록한 순서입니다.</p>
+      <p class="lb-sub">10문제 퀴즈 점수를 등록한 사람들의 순위예요. 점수가 같으면 힌트를 덜 쓴 순서, 그다음 먼저 등록한 순서입니다.</p>
       <div class="lb-status" id="lb-status">순위를 불러오는 중입니다.</div>
       <div class="lb-list hidden" id="lb-list"></div>
       <p class="lb-my-note hidden" id="lb-my-note"></p>
@@ -895,6 +896,10 @@ function lbFetch(path, opts){
     throw err;
   });
 }
+function lbHints(row){
+  var h = row ? row.hints_used : null;
+  return (typeof h === "number" && isFinite(h) && h >= 0) ? Math.floor(h) : 0;
+}
 function renderLeaderboard(rows){
   var status = $("lb-status"), list = $("lb-list"), note = $("lb-my-note");
   var my = lbLoadMy();
@@ -909,26 +914,27 @@ function renderLeaderboard(rows){
   }
   var html = "";
   var bestMine = 0;
+  var bestMineHints = 0;
   rows.forEach(function(row, i){
     var meta = rankMetaByKey(row.rank_key);
     var title = meta ? meta.title : (row.rank_key || "");
     var mine = !!myIds[row.id];
-    if (mine && !bestMine) bestMine = i + 1;
+    if (mine && !bestMine){ bestMine = i + 1; bestMineHints = lbHints(row); }
     html += '<div class="lb-row' + (mine ? " mine" : "") + '">';
     html += '<span class="lb-pos' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>";
     html += '<div class="lb-main"><div class="lb-name">' + lbEscape(row.nickname) + (mine ? '<span class="lb-me">나</span>' : "") + '</div><div class="lb-meta">' + lbEscape(title) + " · " + lbDate(row.created_at) + "</div></div>";
-    html += '<span class="lb-score">' + row.score + "점</span>";
+    html += '<span class="lb-score">' + row.score + '점<span class="lb-hints">힌트 ' + lbHints(row) + "개</span></span>";
     html += "</div>";
   });
   status.classList.add("hidden");
   list.classList.remove("hidden");
   list.innerHTML = html;
   if (bestMine){
-    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요.";
+    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (힌트 " + bestMineHints + "개 사용)";
     note.classList.remove("hidden");
   } else if (my.last){
     var lm = rankMetaByKey(my.last.rank_key);
-    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ") · 아직 상위 10위에는 없어요.";
+    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", 힌트 " + lbHints(my.last) + "개) · 아직 상위 10위에는 없어요.";
     note.classList.remove("hidden");
   } else {
     note.classList.add("hidden");
@@ -939,7 +945,7 @@ function loadLeaderboard(){
   status.classList.remove("hidden");
   status.textContent = "순위를 불러오는 중입니다.";
   list.classList.add("hidden");
-  lbFetch("leaderboard?select=id,nickname,score,rank_key,created_at&order=score.desc,created_at.asc&limit=10")
+  lbFetch("leaderboard?select=id,nickname,score,rank_key,hints_used,created_at&order=score.desc,hints_used.asc,created_at.asc&limit=10")
     .then(function(res){ return res.json(); })
     .then(function(rows){
       renderLeaderboard(rows || []);
@@ -961,10 +967,12 @@ function lbCount(query){
     });
 }
 function lbMyRank(row){
+  var h = lbHints(row);
   return Promise.all([
     lbCount("score=gt." + row.score),
-    lbCount("score=eq." + row.score + "&created_at=lt." + encodeURIComponent(row.created_at))
-  ]).then(function(c){ return c[0] + c[1] + 1; });
+    lbCount("score=eq." + row.score + "&hints_used=lt." + h),
+    lbCount("score=eq." + row.score + "&hints_used=eq." + h + "&created_at=lt." + encodeURIComponent(row.created_at))
+  ]).then(function(c){ return c[0] + c[1] + c[2] + 1; });
 }
 function lbResetSubmit(){
   lbSubmitted = false;
@@ -993,7 +1001,8 @@ function submitLeaderboard(){
   st.className = "lb-submit-status";
   st.textContent = "";
   var meta = rankMetaFor(state.score);
-  var payload = { nickname: nick, score: state.score, rank_key: meta ? meta.key : "" };
+  var hintsUsed = Math.max(0, 3 - (typeof state.hintsLeft === "number" ? state.hintsLeft : 3));
+  var payload = { nickname: nick, score: state.score, rank_key: meta ? meta.key : "", hints_used: hintsUsed };
   lbFetch("leaderboard", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Prefer": "return=representation" },
@@ -1128,7 +1137,7 @@ function shareKakao(){
       content: {
         title: "나 " + state.score + "/" + QUIZZES.length + "점, 칭호는 '" + r[0] + "'!",
         description: "종목명을 가린 실제 과거 차트만 보고 매수·매도를 골랐어요. 너는 몇 점? 도전해봐",
-        imageUrl: "https://buy-or-sell.netlify.app/assets/og-image.png",
+        imageUrl: "https://busstop22106.github.io/buy-or-sell/assets/og-image.png",
         link: {
           mobileWebUrl: rUrl,
           webUrl: rUrl
