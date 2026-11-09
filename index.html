@@ -136,6 +136,29 @@
     background:var(--chip); border-radius:12px; padding:16px; font-size:14px; margin-bottom:16px;
   }
   .context-box b{color:var(--ink)}
+  .context-box .sector-line{margin-top:8px}
+  .context-box .sector-line b{color:var(--primary)}
+
+  /* ---------- Settings (난이도 · 테마) ---------- */
+  :root[data-theme="blue"]{--primary:#0284C7; --primary-dark:#0369A1}
+  :root[data-theme="green"]{--primary:#059669; --primary-dark:#047857}
+  @media (prefers-color-scheme: dark){
+    :root[data-theme="blue"]{--primary:#38BDF8}
+    :root[data-theme="green"]{--primary:#34D399}
+  }
+  .settings{margin-top:20px; padding-top:20px; border-top:1px solid var(--border-soft)}
+  .set-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .set-row + .set-row{margin-top:14px}
+  .set-label{font-size:14px; font-weight:700; color:var(--ink); flex:none}
+  .seg{display:inline-flex; background:var(--chip); border-radius:12px; padding:4px; gap:4px; flex-wrap:wrap}
+  .seg button{
+    border:none; background:transparent; color:var(--body); font-size:14px; font-weight:600;
+    padding:8px 16px; border-radius:9px; display:inline-flex; align-items:center; gap:7px;
+    transition:all .2s cubic-bezier(.16,1,.3,1); -webkit-tap-highlight-color:transparent;
+  }
+  .seg button.on{background:var(--card); color:var(--ink); box-shadow:var(--shadow)}
+  .sw-dot{width:12px; height:12px; border-radius:999px; flex:none}
+  .set-desc{margin:8px 0 0}
 
   .chart-head{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline; justify-content:space-between; margin-bottom:8px}
   .chart-price{font-size:24px; font-weight:800; color:var(--ink); line-height:1.2}
@@ -273,6 +296,9 @@
     .start-row .btn{width:100%; height:54px; font-size:16px}
     .start-row .caption{text-align:center}
     .note-line{margin-top:14px; font-size:12px; line-height:1.55}
+    .settings{margin-top:16px; padding-top:16px}
+    .seg{display:flex; width:100%}
+    .seg button{flex:1; justify-content:center; padding:10px 6px; font-size:13.5px}
     .daily-row{flex-direction:column; align-items:stretch}
     .daily-row .btn{width:100%; height:52px; font-size:16px}
     .daily-row .caption{text-align:center}
@@ -340,6 +366,26 @@
         <span class="caption">10개 종목 · 날짜가 다른 문제 20개 중 랜덤 10문제</span>
       </div>
       <p class="caption note-line">차트는 Yahoo Finance의 실제 일봉 데이터(시가·고가·저가·종가·거래량)를 그대로 사용했습니다. 정답은 선택 시점 종가 대비 20거래일 뒤 종가의 방향으로 판정합니다.</p>
+      <div class="settings">
+        <div class="set-row">
+          <span class="set-label">난이도</span>
+          <div class="seg" id="seg-diff" role="group" aria-label="난이도 선택">
+            <button type="button" data-diff="easy">쉬움</button>
+            <button type="button" data-diff="normal">보통</button>
+            <button type="button" data-diff="hard">어려움</button>
+          </div>
+        </div>
+        <p class="caption set-desc" id="diff-desc"></p>
+        <div class="set-row">
+          <span class="set-label">테마</span>
+          <div class="seg" id="seg-theme" role="group" aria-label="테마 색상 선택">
+            <button type="button" data-theme-opt="neon"><i class="sw-dot" style="background:#2563EB"></i>기본 네온</button>
+            <button type="button" data-theme-opt="blue"><i class="sw-dot" style="background:#0284C7"></i>블루</button>
+            <button type="button" data-theme-opt="green"><i class="sw-dot" style="background:#059669"></i>그린</button>
+          </div>
+        </div>
+        <p class="caption set-desc">선택한 난이도와 테마는 이 기기에 저장돼요. 오늘의 퀴즈는 모두에게 같은 조건인 보통 난이도로 고정됩니다.</p>
+      </div>
     </div>
     <div class="card daily-card fade-in" id="daily-card">
       <div class="daily-top">
@@ -537,7 +583,72 @@ POOL.forEach(function(q, i){
 });
 var QUIZZES = POOL.slice(0, 10);
 
-var state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full" };
+/* ---------------- 난이도 · 테마 설정 ----------------
+   난이도는 힌트 유무와 차트 기간으로 나뉜다. 쉬움=분야 힌트+45일, 보통=힌트 없음+45일(기존 방식),
+   어려움=힌트 없음+30일. 오늘의 퀴즈는 날짜 시드 공정성을 위해 항상 보통으로 고정한다.
+   선택은 localStorage에 저장한다. 리더보드에는 난이도를 기록하지 않는다(점수만). */
+var DIFFS = {
+  easy:   { key: "easy",   label: "쉬움",   pre: 45, hint: true,  desc: "쉬움 · 종목 분야 힌트를 보여줘요 · 차트는 최근 45거래일" },
+  normal: { key: "normal", label: "보통",   pre: 45, hint: false, desc: "보통 · 힌트 없이 최근 45거래일 차트만 보고 판단해요" },
+  hard:   { key: "hard",   label: "어려움", pre: 30, hint: false, desc: "어려움 · 힌트 없이 최근 30거래일 차트만 보여줘요. 정보가 적어 더 어렵습니다" }
+};
+/* 분야 힌트 — 종목 데이터의 국가·섹터 정보. 종목명은 아니지만 분야는 알려주는 쉬움 전용 힌트 */
+var SECTORS = {
+  "NVDA": "미국 · 반도체 (AI 칩)",
+  "META": "미국 · 플랫폼 · 소셜미디어",
+  "TSLA": "미국 · 전기차",
+  "MSFT": "미국 · 소프트웨어 · 클라우드",
+  "AAPL": "미국 · IT 기기 (스마트폰)",
+  "005930.KS": "한국 · 반도체",
+  "000660.KS": "한국 · 반도체",
+  "035420.KS": "한국 · 인터넷 플랫폼",
+  "035720.KS": "한국 · 플랫폼 · 콘텐츠",
+  "005380.KS": "한국 · 자동차"
+};
+var THEMES = { neon: "기본 네온", blue: "블루", green: "그린" };
+var DIFF_KEY = "bos_difficulty", THEME_KEY = "bos_theme";
+var currentDiff = "normal", currentTheme = "neon";
+(function loadSettings(){
+  try {
+    var d = localStorage.getItem(DIFF_KEY);
+    if (d && DIFFS[d]) currentDiff = d;
+    var t = localStorage.getItem(THEME_KEY);
+    if (t && THEMES[t]) currentTheme = t;
+  } catch (e) {}
+})();
+function saveSetting(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function applyTheme(){
+  if (currentTheme === "neon") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", currentTheme);
+  var btns = document.querySelectorAll("#seg-theme button");
+  for (var i = 0; i < btns.length; i++){
+    btns[i].classList.toggle("on", btns[i].getAttribute("data-theme-opt") === currentTheme);
+  }
+}
+function applyDiffUI(){
+  var btns = document.querySelectorAll("#seg-diff button");
+  for (var i = 0; i < btns.length; i++){
+    btns[i].classList.toggle("on", btns[i].getAttribute("data-diff") === currentDiff);
+  }
+  var desc = document.getElementById("diff-desc");
+  if (desc) desc.textContent = DIFFS[currentDiff].desc;
+}
+function setDifficulty(key, silent){
+  if (!DIFFS[key]) return;
+  currentDiff = key;
+  saveSetting(DIFF_KEY, key);
+  applyDiffUI();
+  if (!silent) trackEvent("difficulty_select", { difficulty: key });
+}
+function setTheme(key, silent){
+  if (!THEMES[key]) return;
+  currentTheme = key;
+  saveSetting(THEME_KEY, key);
+  applyTheme();
+  if (!silent) trackEvent("theme_change", { theme: key });
+}
+
+var state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", diff: "normal", preShown: PRE, startIdx: 0 };
 
 function $(id){ return document.getElementById(id); }
 function fmtPrice(v, q){
@@ -573,7 +684,9 @@ function buildChart(q, visibleCount){
   var D = chartDims();
   var CW = D.CW, PH = D.PH, VH = D.VH, GAP = D.GAP, AXIS = D.AXIS, PADL = D.PADL, PADR = D.PADR;
   var CH = PH + GAP + VH + AXIS;
-  var candles = q.candles.slice(0, visibleCount);
+  var startIdx = state && state.startIdx ? state.startIdx : 0;
+  var preShown = state && state.preShown ? state.preShown : PRE;
+  var candles = q.candles.slice(startIdx, startIdx + visibleCount);
   var n = candles.length;
   var min = Infinity, max = -Infinity, vmax = 0;
   candles.forEach(function(c){
@@ -584,7 +697,7 @@ function buildChart(q, visibleCount){
   var pad = (max - min) * 0.08 || 1;
   min -= pad; max += pad;
   var plotW = CW - PADL - PADR;
-  var slot = plotW / (PRE + POST);
+  var slot = plotW / (preShown + POST);
   var bw = Math.max(3, slot * 0.62);
   function X(i){ return PADL + slot * i + slot / 2; }
   function Y(p){ return PH - (p - min) / (max - min) * PH; }
@@ -621,7 +734,7 @@ function buildChart(q, visibleCount){
     if (pts) s += '<polyline points="' + pts + '" fill="none" stroke="' + cfg[1] + '" stroke-width="1.4" stroke-linejoin="round"/>';
   });
   // decision marker
-  var dx = X(PRE - 1);
+  var dx = X(preShown - 1);
   s += '<line x1="' + dx + '" y1="0" x2="' + dx + '" y2="' + (PH + GAP + VH) + '" stroke="' + ink + '" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>';
   s += '<text x="' + Math.min(dx + 5, CW - PADR - 30) + '" y="12" font-size="' + D.fs + '" font-weight="700" fill="' + ink + '">기준일</text>';
   // date labels
@@ -630,8 +743,8 @@ function buildChart(q, visibleCount){
     return '<text x="' + X(i) + '" y="' + (CH - 5) + '" font-size="' + D.fs + '" fill="' + mut + '" text-anchor="' + anchor + '">' + candles[i][0].slice(0, 7) + '</text>';
   }
   s += dlabel(0, "start");
-  s += dlabel(PRE - 1, "middle");
-  if (n > PRE) s += dlabel(n - 1, "end");
+  s += dlabel(preShown - 1, "middle");
+  if (n > preShown) s += dlabel(n - 1, "end");
   s += "</svg>";
   return s;
 }
@@ -675,8 +788,9 @@ function buildFullSet(){
 
 function startQuiz(){
   QUIZZES = buildFullSet();
-  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full" };
-  trackEvent("quiz_start", { question_count: QUIZZES.length });
+  var d = DIFFS[currentDiff] || DIFFS.normal;
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: d.pre, mode: "full", diff: d.key, preShown: d.pre, startIdx: PRE - d.pre };
+  trackEvent("quiz_start", { question_count: QUIZZES.length, difficulty: d.key });
   showScreen("quiz");
   loadQuestion();
 }
@@ -684,17 +798,19 @@ function startQuiz(){
 function loadQuestion(){
   var q = QUIZZES[state.idx];
   state.revealed = false;
-  state.visible = PRE;
+  state.visible = state.preShown;
   $("hud-q").textContent = state.mode === "daily" ? "오늘의 퀴즈" : "문제 " + (state.idx + 1) + " / " + QUIZZES.length;
-  $("hud-market").textContent = marketLabel(q) + " · 종목명 비공개";
+  $("hud-market").textContent = marketLabel(q) + " · 종목명 비공개" + (state.mode !== "daily" ? " · " + DIFFS[state.diff].label : "");
   var scoreWrap = $("hud-score-wrap");
   if (scoreWrap) scoreWrap.innerHTML = state.mode === "daily" ? "하루 한 문제" : '현재 <b id="hud-score">' + state.score + "</b>점";
   $("progress-bar").style.width = (state.idx / QUIZZES.length * 100) + "%";
-  $("context-box").innerHTML = "<b>당시의 상황</b> · " + q.hint;
+  var ctxHtml = "<b>당시의 상황</b> · " + q.hint;
+  if (DIFFS[state.diff].hint && SECTORS[q.sym]) ctxHtml += '<div class="sector-line"><b>분야 힌트</b> · ' + SECTORS[q.sym] + "</div>";
+  $("context-box").innerHTML = ctxHtml;
   $("chart-price").textContent = fmtPrice(q.base, q);
   $("chart-unit").textContent = q.cur === "$" ? "달러" : "원";
-  $("chart-date").textContent = "기준일 " + q.decisionDate + " 종가 기준 · 최근 " + PRE + "거래일";
-  $("chart-host").innerHTML = buildChart(q, PRE);
+  $("chart-date").textContent = "기준일 " + q.decisionDate + " 종가 기준 · 최근 " + state.preShown + "거래일";
+  $("chart-host").innerHTML = buildChart(q, state.preShown);
   $("verdict-host").innerHTML = "";
   var row = $("choice-row");
   row.classList.remove("locked");
@@ -724,13 +840,13 @@ function choose(pick){
   $(pick === "buy" ? "btn-buy" : "btn-sell").classList.add("picked");
   renderDots();
   // animate reveal candle by candle
-  var shown = PRE;
+  var shown = state.preShown;
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function step(){
     shown++;
     state.visible = shown;
     $("chart-host").innerHTML = buildChart(q, shown);
-    if (shown < PRE + POST){
+    if (shown < state.preShown + POST){
       state.timer = setTimeout(step, reduced ? 0 : 85);
     } else {
       showVerdict(pick, correct);
@@ -800,7 +916,8 @@ function startDaily(){
   }
   var q = POOL[dailyIndex()];
   QUIZZES = [q];
-  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "daily" };
+  // 오늘의 퀴즈는 날짜 시드 공정성을 위해 선택한 난이도와 무관하게 보통(힌트 없음 · 45일)으로 고정
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "daily", diff: "normal", preShown: PRE, startIdx: 0 };
   trackEvent("daily_quiz_start", { symbol: q.sym, decision_date: q.decisionDate, date: todayStr() });
   showScreen("quiz");
   loadQuestion();
@@ -1347,6 +1464,18 @@ window.addEventListener("orientationchange", function(){
 });
 
 $("btn-start").addEventListener("click", startQuiz);
+(function initSettings(){
+  applyTheme();
+  applyDiffUI();
+  var db = document.querySelectorAll("#seg-diff button");
+  for (var i = 0; i < db.length; i++){
+    db[i].addEventListener("click", function(){ setDifficulty(this.getAttribute("data-diff")); });
+  }
+  var tb = document.querySelectorAll("#seg-theme button");
+  for (var j = 0; j < tb.length; j++){
+    tb[j].addEventListener("click", function(){ setTheme(this.getAttribute("data-theme-opt")); });
+  }
+})();
 $("btn-daily").addEventListener("click", startDaily);
 renderDailyCard();
 $("btn-rank-start").addEventListener("click", function(){
