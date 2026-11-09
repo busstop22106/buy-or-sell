@@ -455,7 +455,6 @@
       <div class="result-actions">
         <button class="btn btn-primary" id="btn-share" type="button">친구에게 공유하고 도전하기</button>
         <button class="btn btn-kakao hidden" id="btn-kakao" type="button">카카오톡으로 공유</button>
-        <button class="btn btn-ghost" id="btn-save-image" type="button">결과 이미지 저장</button>
         <button class="btn btn-ghost" id="btn-copy-link" type="button">링크 복사</button>
         <button class="btn btn-ghost" id="btn-restart" type="button">다시 풀기</button>
       </div>
@@ -1200,7 +1199,7 @@ function toast(msg){
   toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
 }
 
-var SITE_URL = "https://buy-or-sell.netlify.app/";
+var SITE_URL = "https://busstop22106.github.io/buy-or-sell/";
 
 function shareText(){
   var r = rankFor(state.score);
@@ -1442,98 +1441,6 @@ function renderBattleCompare(){
   }
 }
 
-function downloadResultImage(){
-  trackEvent("share_click", { method: "image", score: state.score });
-  function draw(){ drawResultCard(); }
-  if (document.fonts && document.fonts.ready){
-    document.fonts.ready.then(draw);
-  } else draw();
-}
-
-function drawResultCard(){
-  var S = 1080;
-  var cv = document.createElement("canvas");
-  cv.width = S; cv.height = S;
-  var ctx = cv.getContext("2d");
-  var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  var bg = dark ? "#0B1120" : "#F8FAFC";
-  var card = dark ? "#111A2E" : "#FFFFFF";
-  var ink = dark ? "#F1F5F9" : "#0F172A";
-  var sub = dark ? "#94A3B8" : "#64748B";
-  var line = dark ? "#1E293B" : "#E2E8F0";
-  var good = dark ? "#34D399" : "#059669";
-  var bad = dark ? "#F87171" : "#DC2626";
-  var font = '"Pretendard Variable", Pretendard, "Malgun Gothic", sans-serif';
-
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, S, S);
-  ctx.fillStyle = card;
-  ctx.strokeStyle = line; ctx.lineWidth = 2;
-  roundRect(ctx, 48, 48, S - 96, S - 96, 32); ctx.fill(); ctx.stroke();
-
-  ctx.textAlign = "center";
-  var r = rankFor(state.score);
-  ctx.fillStyle = sub;
-  ctx.font = "700 34px " + font;
-  ctx.fillText("주식 매수·매도 퀴즈 · 나의 결과", S / 2, 168);
-
-  ctx.fillStyle = ink;
-  ctx.font = "800 96px " + font;
-  ctx.fillText(r[0], S / 2, 300);
-
-  ctx.font = "800 64px " + font;
-  ctx.fillText(state.score + "점 / " + QUIZZES.length + "점", S / 2, 396);
-
-  ctx.strokeStyle = line; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(168, 448); ctx.lineTo(S - 168, 448); ctx.stroke();
-
-  // 문제별 O/X 2열
-  ctx.textAlign = "left";
-  var rowY = 512, rowH = 52, colX = [140, 580];
-  QUIZZES.forEach(function(q, i){
-    var x = colX[i % 2], y = rowY + Math.floor(i / 2) * rowH;
-    var ok = state.answers[i];
-    ctx.fillStyle = ok ? good : bad;
-    ctx.font = "800 30px " + font;
-    ctx.fillText(ok ? "✓" : "✕", x, y);
-    ctx.fillStyle = ink;
-    ctx.font = "600 30px " + font;
-    var label = q.name + "  " + fmtPct(q.chg);
-    ctx.fillText(label, x + 44, y);
-  });
-
-  var now = new Date();
-  var dateStr = now.getFullYear() + "년 " + (now.getMonth() + 1) + "월 " + now.getDate() + "일";
-  ctx.textAlign = "center";
-  ctx.fillStyle = sub;
-  ctx.font = "500 30px " + font;
-  ctx.fillText(dateStr, S / 2, 836);
-
-  ctx.fillStyle = ink;
-  ctx.font = "800 44px " + font;
-  ctx.fillText("buy-or-sell.netlify.app", S / 2, 912);
-  ctx.fillStyle = sub;
-  ctx.font = "500 28px " + font;
-  ctx.fillText("차트만 보고 매수? 매도? 너도 도전해봐", S / 2, 962);
-
-  var a = document.createElement("a");
-  a.download = "buy-or-sell-result.png";
-  a.href = cv.toDataURL("image/png");
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  toast("결과 이미지가 저장됐습니다.");
-}
-
-function roundRect(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
 var resizeTimer = null;
 window.addEventListener("resize", function(){
   clearTimeout(resizeTimer);
@@ -1572,7 +1479,6 @@ $("btn-restart").addEventListener("click", startQuiz);
 $("btn-share").addEventListener("click", shareResult);
 $("btn-kakao").addEventListener("click", shareKakao);
 if (!kakaoReady()) $("btn-kakao").classList.add("hidden");
-$("btn-save-image").addEventListener("click", downloadResultImage);
 $("btn-copy-link").addEventListener("click", copyLink);
 $("btn-lb-submit").addEventListener("click", submitLeaderboard);
 $("lb-nickname").addEventListener("keydown", function(e){
