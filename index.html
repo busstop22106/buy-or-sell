@@ -221,6 +221,43 @@
   .daily-desc b{color:var(--ink)}
   .daily-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center}
 
+  /* ---------- Leaderboard ---------- */
+  .lb-card{margin-top:16px}
+  .lb-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  .lb-refresh{height:36px; padding:0 14px; font-size:13px; border-radius:10px}
+  .lb-sub{font-size:13px; color:var(--muted); margin:6px 0 0}
+  .lb-list{margin-top:6px}
+  .lb-row{display:flex; align-items:center; gap:12px; padding:11px 8px; border-bottom:1px solid var(--border-soft)}
+  .lb-row:last-child{border-bottom:none}
+  .lb-row.mine{background:var(--down-soft); border-radius:8px; border-bottom-color:transparent}
+  .lb-pos{width:26px; flex:none; text-align:center; font-weight:800; color:var(--muted); font-size:15px}
+  .lb-pos.top{color:var(--primary)}
+  .lb-main{flex:1; min-width:0}
+  .lb-name{font-weight:700; color:var(--ink); font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .lb-meta{font-size:12px; color:var(--muted)}
+  .lb-me{display:inline-block; background:var(--primary); color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px; margin-left:6px; vertical-align:2px}
+  .lb-score{font-weight:800; color:var(--ink); font-size:16px; flex:none}
+  .lb-status{font-size:14px; color:var(--muted); padding:14px 4px 6px}
+  .lb-my-note{margin:12px 0 0; font-size:13px; color:var(--muted)}
+  .lb-my-note b{color:var(--primary)}
+  .lb-submit{margin-top:24px; padding-top:20px; border-top:1px solid var(--border-soft); text-align:left}
+  .lb-submit h3{font-size:16px; font-weight:700; color:var(--ink); margin:0}
+  .lb-submit p.desc{font-size:13px; color:var(--muted); margin:6px 0 0}
+  .lb-form{display:flex; gap:10px; margin-top:12px}
+  .lb-input{
+    flex:1; min-width:0; height:48px; padding:0 14px; border:1px solid var(--border); border-radius:12px;
+    background:var(--card); color:var(--ink); font:inherit; font-size:15px; letter-spacing:inherit;
+  }
+  .lb-input:focus{outline:2px solid var(--primary); outline-offset:1px; border-color:transparent}
+  .lb-submit-status{font-size:14px; margin:12px 0 0; min-height:21px}
+  .lb-submit-status.ok{color:var(--good); font-weight:700}
+  .lb-submit-status.err{color:var(--bad)}
+  @media (max-width:640px){
+    .lb-form{flex-direction:column}
+    .lb-form .btn{width:100%; height:52px; font-size:16px}
+    .lb-input{height:52px; font-size:16px}
+  }
+
   /* ---------- Mobile (phones) ---------- */
   button{touch-action:manipulation}
   img,svg{max-width:100%}
@@ -315,6 +352,16 @@
         <span class="caption" id="daily-note">매일 자정에 새 문제 · 하루 한 번만 풀 수 있어요</span>
       </div>
     </div>
+    <div class="card lb-card fade-in" id="leaderboard-card">
+      <div class="lb-head">
+        <h2>리더보드</h2>
+        <button class="btn btn-ghost lb-refresh" id="btn-lb-refresh" type="button">새로고침</button>
+      </div>
+      <p class="lb-sub">10문제 퀴즈 점수를 등록한 사람들의 순위예요. 점수가 같으면 먼저 등록한 순서입니다.</p>
+      <div class="lb-status" id="lb-status">순위를 불러오는 중입니다.</div>
+      <div class="lb-list hidden" id="lb-list"></div>
+      <p class="lb-my-note hidden" id="lb-my-note"></p>
+    </div>
     <div class="how-grid">
       <div class="how-card">
         <div class="how-num">1</div>
@@ -384,6 +431,15 @@
         <button class="btn btn-ghost" id="btn-restart" type="button">다시 풀기</button>
       </div>
       <p class="caption" id="share-preview" style="margin-top:16px"></p>
+      <div class="lb-submit" id="lb-submit-box">
+        <h3>리더보드에 점수 등록</h3>
+        <p class="desc">닉네임은 이 기기에 저장돼서 다음에도 그대로 쓸 수 있어요. 이 결과에서는 한 번만 등록할 수 있습니다.</p>
+        <div class="lb-form">
+          <input class="lb-input" id="lb-nickname" type="text" maxlength="12" placeholder="닉네임 (최대 12자)" autocomplete="off" />
+          <button class="btn btn-primary" id="btn-lb-submit" type="button">등록하기</button>
+        </div>
+        <p class="lb-submit-status" id="lb-submit-status"></p>
+      </div>
     </div>
     <div class="card" style="margin-top:16px">
       <h2>문제별 복기</h2>
@@ -861,6 +917,201 @@ function rankUrl(key){
   return SITE_URL + "?rank=" + encodeURIComponent(key);
 }
 
+/* ---------------- Leaderboard (Supabase REST) ----------------
+   연결 실패 시 리더보드 섹션만 안내 문구를 보이고 퀴즈 기능에는 영향을 주지 않는다. */
+var SUPABASE_URL = "https://crzftaaronaausiyidby.supabase.co";
+var SUPABASE_KEY = "sb_publishable_o-JHE0ctaQmKsibIn90N6Q_4N-tWKRH";
+var LB_NICK_KEY = "bos_nickname";
+var LB_MY_KEY = "bos_lb_my_v1";
+var lbSubmitted = false;
+
+function lbEscape(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function lbSavedNickname(){
+  try { return localStorage.getItem(LB_NICK_KEY) || ""; } catch (e) { return ""; }
+}
+function lbSaveNickname(n){
+  try { localStorage.setItem(LB_NICK_KEY, n); } catch (e) {}
+}
+function lbLoadMy(){
+  try {
+    var raw = localStorage.getItem(LB_MY_KEY);
+    if (raw){
+      var o = JSON.parse(raw);
+      if (o && o.ids) return o;
+    }
+  } catch (e) {}
+  return { ids: [], last: null };
+}
+function lbSaveMy(o){
+  try { localStorage.setItem(LB_MY_KEY, JSON.stringify(o)); } catch (e) {}
+}
+function lbDate(iso){
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  function p(n){ return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate());
+}
+function lbFetch(path, opts){
+  opts = opts || {};
+  var ctrl = ("AbortController" in window) ? new AbortController() : null;
+  var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 9000) : null;
+  var headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
+  if (opts.headers) for (var k in opts.headers) headers[k] = opts.headers[k];
+  var init = { method: opts.method || "GET", headers: headers };
+  if (opts.body) init.body = opts.body;
+  if (ctrl) init.signal = ctrl.signal;
+  return fetch(SUPABASE_URL + "/rest/v1/" + path, init).then(function(res){
+    if (timer) clearTimeout(timer);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res;
+  }, function(err){
+    if (timer) clearTimeout(timer);
+    throw err;
+  });
+}
+function renderLeaderboard(rows){
+  var status = $("lb-status"), list = $("lb-list"), note = $("lb-my-note");
+  var my = lbLoadMy();
+  var myIds = {};
+  my.ids.forEach(function(id){ myIds[id] = true; });
+  if (!rows.length){
+    list.classList.add("hidden");
+    note.classList.add("hidden");
+    status.classList.remove("hidden");
+    status.textContent = "아직 등록된 기록이 없어요. 퀴즈를 풀고 첫 기록을 남겨보세요.";
+    return;
+  }
+  var html = "";
+  var bestMine = 0;
+  rows.forEach(function(row, i){
+    var meta = rankMetaByKey(row.rank_key);
+    var title = meta ? meta.title : (row.rank_key || "");
+    var mine = !!myIds[row.id];
+    if (mine && !bestMine) bestMine = i + 1;
+    html += '<div class="lb-row' + (mine ? " mine" : "") + '">';
+    html += '<span class="lb-pos' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>";
+    html += '<div class="lb-main"><div class="lb-name">' + lbEscape(row.nickname) + (mine ? '<span class="lb-me">나</span>' : "") + '</div><div class="lb-meta">' + lbEscape(title) + " · " + lbDate(row.created_at) + "</div></div>";
+    html += '<span class="lb-score">' + row.score + "점</span>";
+    html += "</div>";
+  });
+  status.classList.add("hidden");
+  list.classList.remove("hidden");
+  list.innerHTML = html;
+  if (bestMine){
+    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요.";
+    note.classList.remove("hidden");
+  } else if (my.last){
+    var lm = rankMetaByKey(my.last.rank_key);
+    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ") · 아직 상위 10위에는 없어요.";
+    note.classList.remove("hidden");
+  } else {
+    note.classList.add("hidden");
+  }
+}
+function loadLeaderboard(){
+  var status = $("lb-status"), list = $("lb-list");
+  status.classList.remove("hidden");
+  status.textContent = "순위를 불러오는 중입니다.";
+  list.classList.add("hidden");
+  lbFetch("leaderboard?select=id,nickname,score,rank_key,created_at&order=score.desc,created_at.asc&limit=10")
+    .then(function(res){ return res.json(); })
+    .then(function(rows){
+      renderLeaderboard(rows || []);
+      trackEvent("leaderboard_view", { entry_count: (rows || []).length });
+    })
+    .catch(function(){
+      list.classList.add("hidden");
+      $("lb-my-note").classList.add("hidden");
+      status.classList.remove("hidden");
+      status.textContent = "지금은 순위를 불러올 수 없어요. 잠시 후 새로고침을 눌러주세요.";
+    });
+}
+function lbCount(query){
+  return lbFetch("leaderboard?select=id&limit=1&" + query, { headers: { "Prefer": "count=exact" } })
+    .then(function(res){
+      var cr = res.headers.get("content-range") || "";
+      var total = parseInt(cr.split("/")[1], 10);
+      return isNaN(total) ? 0 : total;
+    });
+}
+function lbMyRank(row){
+  return Promise.all([
+    lbCount("score=gt." + row.score),
+    lbCount("score=eq." + row.score + "&created_at=lt." + encodeURIComponent(row.created_at))
+  ]).then(function(c){ return c[0] + c[1] + 1; });
+}
+function lbResetSubmit(){
+  lbSubmitted = false;
+  var btn = $("btn-lb-submit");
+  btn.disabled = false;
+  btn.textContent = "등록하기";
+  $("lb-nickname").value = lbSavedNickname();
+  var st = $("lb-submit-status");
+  st.className = "lb-submit-status";
+  st.textContent = "";
+}
+function submitLeaderboard(){
+  if (lbSubmitted) return;
+  var input = $("lb-nickname");
+  var nick = (input.value || "").trim().slice(0, 12);
+  var st = $("lb-submit-status");
+  if (!nick){
+    st.className = "lb-submit-status err";
+    st.textContent = "닉네임을 입력해주세요.";
+    input.focus();
+    return;
+  }
+  var btn = $("btn-lb-submit");
+  btn.disabled = true;
+  btn.textContent = "등록 중…";
+  st.className = "lb-submit-status";
+  st.textContent = "";
+  var meta = rankMetaFor(state.score);
+  var payload = { nickname: nick, score: state.score, rank_key: meta ? meta.key : "" };
+  lbFetch("leaderboard", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Prefer": "return=representation" },
+    body: JSON.stringify(payload)
+  }).then(function(res){ return res.json(); }).then(function(rows){
+    var row = rows && rows[0];
+    lbSubmitted = true;
+    lbSaveNickname(nick);
+    if (row){
+      var my = lbLoadMy();
+      my.ids.push(row.id);
+      if (my.ids.length > 20) my.ids = my.ids.slice(my.ids.length - 20);
+      my.last = row;
+      lbSaveMy(my);
+    }
+    trackEvent("leaderboard_submit", { score: state.score, rank: rankFor(state.score)[0], rank_key: payload.rank_key });
+    btn.textContent = "등록 완료";
+    if (row){
+      lbMyRank(row).then(function(rank){
+        st.className = "lb-submit-status ok";
+        st.textContent = "리더보드에 등록됐어요. 현재 " + rank + "위입니다.";
+        loadLeaderboard();
+      }).catch(function(){
+        st.className = "lb-submit-status ok";
+        st.textContent = "리더보드에 등록됐어요.";
+        loadLeaderboard();
+      });
+    } else {
+      st.className = "lb-submit-status ok";
+      st.textContent = "리더보드에 등록됐어요.";
+      loadLeaderboard();
+    }
+  }).catch(function(){
+    btn.disabled = false;
+    btn.textContent = "등록하기";
+    st.className = "lb-submit-status err";
+    st.textContent = "등록에 실패했어요. 연결을 확인하고 다시 시도해주세요.";
+  });
+}
+
 function showResult(){
   $("progress-bar").style.width = "100%";
   showScreen("result");
@@ -874,6 +1125,7 @@ function showResult(){
   $("result-score").textContent = state.score + "점 / " + QUIZZES.length + "점";
   $("result-desc").textContent = r[1];
   $("share-preview").textContent = "공유 문구: \"" + shareText() + "\"";
+  lbResetSubmit();
   $("btn-kakao").classList.toggle("hidden", !kakaoReady());
   var html = "";
   QUIZZES.forEach(function(q, i){
@@ -1119,6 +1371,12 @@ $("btn-kakao").addEventListener("click", shareKakao);
 if (!kakaoReady()) $("btn-kakao").classList.add("hidden");
 $("btn-save-image").addEventListener("click", downloadResultImage);
 $("btn-copy-link").addEventListener("click", copyLink);
+$("btn-lb-submit").addEventListener("click", submitLeaderboard);
+$("lb-nickname").addEventListener("keydown", function(e){
+  if (e.key === "Enter"){ e.preventDefault(); submitLeaderboard(); }
+});
+$("btn-lb-refresh").addEventListener("click", loadLeaderboard);
+loadLeaderboard();
 </script>
 </body>
 </html>
