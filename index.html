@@ -453,9 +453,8 @@
       <div class="result-score" id="result-score">10점 / 10점</div>
       <p class="result-desc" id="result-desc"></p>
       <div class="result-actions">
-        <button class="btn btn-primary" id="btn-share" type="button">친구에게 공유하고 도전하기</button>
+        <button class="btn btn-primary" id="btn-share" type="button">친구한테 공유하기</button>
         <button class="btn btn-kakao hidden" id="btn-kakao" type="button">카카오톡으로 공유</button>
-        <button class="btn btn-ghost" id="btn-copy-link" type="button">링크 복사</button>
         <button class="btn btn-ghost" id="btn-restart" type="button">다시 풀기</button>
       </div>
       <p class="caption" id="share-preview" style="margin-top:16px"></p>
@@ -1257,16 +1256,6 @@ function shareKakao(){
   }
 }
 
-function copyLink(){
-  trackEvent("share_click", { method: "copy", score: state.score });
-  if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(rankUrl(rankMetaFor(state.score).key)).then(function(){ toast("내 칭호 페이지 링크가 복사됐습니다."); },
-      function(){ toast("복사에 실패했습니다."); });
-  } else {
-    toast("이 브라우저에서는 복사를 지원하지 않습니다.");
-  }
-}
-
 /* ---------------- 친구 대결 (?battle=<base64url>) ----------------
    도전장 링크 하나에 도전자 닉네임·점수·칭호·문제 세트 시드를 담는다.
    백엔드 없이 링크만으로 같은 10문제를 같은 순서로 재현하고, 결과에서 점수를 비교한다.
@@ -1479,7 +1468,6 @@ $("btn-restart").addEventListener("click", startQuiz);
 $("btn-share").addEventListener("click", shareResult);
 $("btn-kakao").addEventListener("click", shareKakao);
 if (!kakaoReady()) $("btn-kakao").classList.add("hidden");
-$("btn-copy-link").addEventListener("click", copyLink);
 $("btn-lb-submit").addEventListener("click", submitLeaderboard);
 $("lb-nickname").addEventListener("keydown", function(e){
   if (e.key === "Enter"){ e.preventDefault(); submitLeaderboard(); }
