@@ -220,15 +220,6 @@
     *{transition:none !important}
   }
 
-  /* ---------- Daily ---------- */
-  .daily-card{margin-top:16px}
-  .daily-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
-  .streak-badge{background:#FFF7ED; color:#C2410C; border:1px solid #FED7AA; font-weight:700; font-size:13px; border-radius:999px; padding:4px 12px}
-  @media (prefers-color-scheme: dark){ .streak-badge{background:rgba(234,88,12,.15); color:#FDBA74; border-color:rgba(234,88,12,.35)} }
-  .daily-desc{font-size:15px; margin:10px 0 0}
-  .daily-desc b{color:var(--ink)}
-  .daily-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center}
-
   /* ---------- Leaderboard ---------- */
   .lb-card{margin-top:16px}
   .lb-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
@@ -323,11 +314,6 @@
     .start-row .btn{width:100%; height:54px; font-size:16px}
     .start-row .caption{text-align:center}
     .note-line{margin-top:14px; font-size:12px; line-height:1.55}
-    .daily-row{flex-direction:column; align-items:stretch}
-    .daily-row .btn{width:100%; height:52px; font-size:16px}
-    .daily-row .caption{text-align:center}
-    .daily-desc{font-size:14.5px}
-
     .hud{gap:8px; margin-bottom:10px}
     .hud-left{gap:8px}
     .q-badge{font-size:13px; padding:5px 12px}
@@ -391,17 +377,6 @@
       </div>
       <p class="caption note-line">차트는 Yahoo Finance의 실제 일봉 데이터(시가·고가·저가·종가·거래량)를 그대로 사용했습니다. 정답은 선택 시점 종가 대비 20거래일 뒤 종가의 방향으로 판정합니다.</p>
       <p class="caption note-line">가격과 당시 상황은 처음엔 가려져 있어요. 궁금한 문제에서는 '힌트보기'로 공개할 수 있고, 힌트는 10문제당 3번까지만 쓸 수 있습니다.</p>
-    </div>
-    <div class="card daily-card fade-in" id="daily-card">
-      <div class="daily-top">
-        <h2>오늘의 퀴즈</h2>
-        <span class="streak-badge hidden" id="daily-streak"></span>
-      </div>
-      <p class="daily-desc" id="daily-desc">오늘의 문제를 불러오는 중입니다.</p>
-      <div class="daily-row">
-        <button class="btn btn-ghost" id="btn-daily" type="button">오늘의 퀴즈 풀기 · 1문제</button>
-        <span class="caption" id="daily-note">매일 자정에 새 문제 · 하루 한 번만 풀 수 있어요</span>
-      </div>
     </div>
     <div class="card lb-card fade-in" id="leaderboard-card">
       <div class="lb-head">
@@ -829,7 +804,7 @@ function loadQuestion(){
   var q = QUIZZES[state.idx];
   state.revealed = false;
   state.visible = state.preShown;
-  $("hud-q").textContent = state.mode === "daily" ? "오늘의 퀴즈" : (state.mode === "battle" ? "친구 대결 · 문제 " : "문제 ") + (state.idx + 1) + " / " + QUIZZES.length;
+  $("hud-q").textContent = (state.mode === "battle" ? "친구 대결 · 문제 " : "문제 ") + (state.idx + 1) + " / " + QUIZZES.length;
   var banner = $("battle-banner");
   if (banner){
     if (state.mode === "battle" && state.battle){
@@ -843,7 +818,7 @@ function loadQuestion(){
   }
   $("hud-market").textContent = marketLabel(q) + " · 종목명 비공개";
   var scoreWrap = $("hud-score-wrap");
-  if (scoreWrap) scoreWrap.innerHTML = state.mode === "daily" ? "하루 한 문제" : '현재 <b id="hud-score">' + state.score + "</b>점";
+  if (scoreWrap) scoreWrap.innerHTML = '현재 <b id="hud-score">' + state.score + "</b>점";
   $("progress-bar").style.width = (state.idx / QUIZZES.length * 100) + "%";
   state.hintUsed = false;
   renderHintArea(q);
@@ -897,118 +872,8 @@ function choose(pick){
   state.timer = setTimeout(step, reduced ? 0 : 350);
 }
 
-/* ---------------- Daily quiz ---------------- */
-var DAILY_KEY = "bos_daily_v1";
-function todayStr(d){
-  d = d || new Date();
-  function p(n){ return (n < 10 ? "0" : "") + n; }
-  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
-}
-function dailyIndex(){
-  var t = todayStr(), h = 0;
-  for (var i = 0; i < t.length; i++){ h = (h * 31 + t.charCodeAt(i)) >>> 0; }
-  return h % POOL.length;
-}
-function loadDailyRecord(){
-  try {
-    var raw = localStorage.getItem(DAILY_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-function dailyStatus(){
-  var rec = loadDailyRecord();
-  var today = todayStr();
-  var y = new Date(); y.setDate(y.getDate() - 1);
-  var out = { doneToday: false, streak: 0, rec: rec };
-  if (rec && typeof rec.streak === "number"){
-    if (rec.lastDate === today){ out.doneToday = true; out.streak = rec.streak; }
-    else if (rec.lastDate === todayStr(y)){ out.streak = rec.streak; }
-  }
-  return out;
-}
-function renderDailyCard(){
-  var desc = $("daily-desc"), btn = $("btn-daily"), streakEl = $("daily-streak"), note = $("daily-note");
-  if (!desc || !btn || !streakEl) return;
-  var st = dailyStatus();
-  var now = new Date();
-  var dateLabel = (now.getMonth() + 1) + "월 " + now.getDate() + "일";
-  if (st.streak > 0){
-    streakEl.textContent = "🔥 " + st.streak + "일 연속";
-    streakEl.classList.remove("hidden");
-  } else {
-    streakEl.classList.add("hidden");
-  }
-  if (st.doneToday && st.rec){
-    desc.innerHTML = dateLabel + " 문제는 이미 풀었어요. 오늘의 종목은 <b>" + st.rec.name + "</b>(기준일 " + st.rec.decisionDate + ")였고, 당신은 <b>" + (st.rec.correct ? "정답" : "오답") + "</b>이었습니다.";
-    btn.disabled = true;
-    btn.textContent = "오늘은 완료했어요";
-    if (note) note.textContent = "내일 자정에 새 문제가 열립니다";
-  } else {
-    desc.textContent = dateLabel + ", 오늘의 문제 1개가 기다리고 있어요. 같은 날엔 모두가 같은 종목을 같은 기준일로 풉니다. 오늘의 퀴즈는 내일 사라져요.";
-    btn.disabled = false;
-    btn.textContent = "오늘의 퀴즈 풀기 · 1문제";
-    if (note) note.textContent = "매일 자정에 새 문제 · 하루 한 번만 풀 수 있어요";
-  }
-}
-function startDaily(){
-  var st = dailyStatus();
-  if (st.doneToday){
-    toast("오늘의 퀴즈는 이미 풀었습니다. 내일 자정에 새 문제가 열려요.");
-    return;
-  }
-  var q = POOL[dailyIndex()];
-  QUIZZES = [q];
-  // 오늘의 퀴즈는 날짜 시드로 모두가 같은 문제를 풀고, 힌트는 1회까지 쓸 수 있다
-  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "daily", preShown: PRE, startIdx: 0, seed: null, battle: null, battleTracked: false, hintsLeft: 1, hintUsed: false };
-  trackEvent("daily_quiz_start", { symbol: q.sym, decision_date: q.decisionDate, date: todayStr() });
-  showScreen("quiz");
-  loadQuestion();
-}
-function saveDailyResult(q, correct){
-  var st = dailyStatus();
-  var streak = st.doneToday ? st.streak : st.streak + 1;
-  try {
-    localStorage.setItem(DAILY_KEY, JSON.stringify({
-      lastDate: todayStr(), streak: streak, correct: correct,
-      sym: q.sym, name: q.name, decisionDate: q.decisionDate
-    }));
-  } catch (e) {}
-  return streak;
-}
-function goHome(){
-  showScreen("intro");
-  renderDailyCard();
-}
-function showDailyVerdict(pick, correct){
-  var q = QUIZZES[state.idx];
-  var streak = saveDailyResult(q, correct);
-  trackEvent("daily_quiz_complete", { correct: correct, streak: streak, symbol: q.sym, decision_date: q.decisionDate });
-  $("progress-bar").style.width = "100%";
-  var retClass = q.chg > 0 ? "up" : "down";
-  var pickLabel = pick === "buy" ? "매수" : "매도";
-  var ansLabel = q.answer === "buy" ? "매수" : "매도";
-  var html = "";
-  html += '<div class="verdict ' + (correct ? "ok" : "no") + ' fade-in" aria-live="polite">';
-  html += "<h2>" + (correct ? "정답입니다" : "아쉽네요, 오답입니다") + "</h2>";
-  html += '<div class="stock-name">오늘의 종목은 ' + q.name + " (" + q.en + ") 였습니다</div>";
-  html += "<p>당신은 <b>" + pickLabel + "</b>, 정답은 <b>" + ansLabel + "</b>였습니다. " + q.story + "</p>";
-  html += '<div class="stat-row">';
-  html += '<div class="stat"><div class="k">기준일 종가 (' + q.decisionDate + ')</div><div class="v">' + fmtPrice(q.base, q) + (q.cur === "$" ? " 달러" : "원") + "</div></div>";
-  html += '<div class="stat"><div class="k">20거래일 뒤 종가</div><div class="v">' + fmtPrice(q.end, q) + (q.cur === "$" ? " 달러" : "원") + "</div></div>";
-  html += '<div class="stat"><div class="k">20거래일 변동률</div><div class="v ' + retClass + '">' + fmtPct(q.chg) + "</div></div>";
-  html += "</div>";
-  html += '<p style="margin-top:14px"><b>' + (streak >= 2 ? "🔥 " + streak + "일 연속으로 풀고 있어요." : "오늘부터 스트릭이 시작됐어요. 내일도 풀면 🔥 2일 연속이 됩니다.") + "</b> 내일 자정에 새 문제가 열립니다.</p>";
-  html += '<div class="verdict-actions"><button class="btn btn-primary" type="button" id="btn-daily-full">10문제 풀어보기</button><button class="btn btn-ghost" type="button" id="btn-daily-home">홈으로</button></div>';
-  html += "</div>";
-  $("verdict-host").innerHTML = html;
-  $("btn-daily-home").addEventListener("click", goHome);
-  $("btn-daily-full").addEventListener("click", startQuiz);
-  $("btn-daily-home").scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
 function showVerdict(pick, correct){
   var q = QUIZZES[state.idx];
-  if (state.mode === "daily"){ showDailyVerdict(pick, correct); return; }
   var last = state.idx === QUIZZES.length - 1;
   var retClass = q.chg > 0 ? "up" : "down";
   var pickLabel = pick === "buy" ? "매수" : "매도";
@@ -1686,8 +1551,6 @@ window.addEventListener("orientationchange", function(){
 });
 
 $("btn-start").addEventListener("click", startQuiz);
-$("btn-daily").addEventListener("click", startDaily);
-renderDailyCard();
 $("btn-rank-start").addEventListener("click", function(){
   trackEvent("rank_landing_start", {});
   startQuiz();
