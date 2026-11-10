@@ -712,12 +712,12 @@ function choose(pick){
     state.visible = shown;
     $("chart-host").innerHTML = buildChart(q, shown);
     if (shown < state.preShown + POST){
-      state.timer = setTimeout(step, reduced ? 0 : 85);
+      state.timer = setTimeout(step, reduced ? 0 : 40);
     } else {
       showVerdict(pick, correct);
     }
   }
-  state.timer = setTimeout(step, reduced ? 0 : 350);
+  state.timer = setTimeout(step, reduced ? 0 : 180);
 }
 
 function showVerdict(pick, correct){
