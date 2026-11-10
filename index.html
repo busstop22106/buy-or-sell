@@ -351,6 +351,8 @@
   #review-card.review-inside{margin-top:24px; padding:20px 0 0; border:none; border-top:1px solid var(--border-soft); border-radius:0; box-shadow:none; background:transparent; text-align:left}
   .result-home-inside{margin-top:16px; padding-top:16px; border-top:1px solid var(--border-soft); display:flex; justify-content:center}
   .result-home-inside .btn{min-width:200px}
+  .site-foot{margin-top:28px; padding-top:16px; border-top:1px solid var(--border-soft); text-align:center}
+  .site-foot span{font-size:12px; color:var(--faint); letter-spacing:-0.01em}
   @media (max-width:640px){
     .result-home-inside .btn{width:100%; height:52px; font-size:16px}
     .result-lb-panel .lb-refresh{height:36px; width:auto}
@@ -588,6 +590,8 @@
       <p class="caption" style="margin-top:16px">수익률은 기준일 종가 대비 20거래일 뒤 종가 기준이며, 데이터 출처는 Yahoo Finance 일봉입니다. 실제 투자는 차트 하나만으로 판단할 수 없습니다.</p>
     </div>
   </section>
+
+  <footer class="site-foot hidden" id="site-foot"><span id="visitor-today"></span></footer>
 
 </div>
 
@@ -1673,6 +1677,89 @@ function pvStart(){
 })();
 
 loadLeaderboard();
+
+/* ---------------- 오늘 방문자 카운터 (Supabase daily_visits) ----------------
+   - 오늘 날짜는 Asia/Seoul 기준 YYYY-MM-DD.
+   - 이 브라우저에서 오늘 첫 방문이면 RPC(increment_daily_visits)로 +1 하고 반환값 표시 + localStorage 플래그 저장.
+   - 이미 오늘 방문했으면 RPC를 부르지 않고 SELECT로 오늘 count만 조회해 표시.
+   - 어떤 실패든 카운터를 숨긴 채로 조용히 넘어간다 (에러 문구·0 표시 없음, 다른 기능에 영향 없음). */
+function bvTodayKST(){
+  try {
+    var parts = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+    var y = "", m = "", d = "";
+    for (var i = 0; i < parts.length; i++){
+      if (parts[i].type === "year") y = parts[i].value;
+      else if (parts[i].type === "month") m = parts[i].value;
+      else if (parts[i].type === "day") d = parts[i].value;
+    }
+    if (y && m && d) return y + "-" + m + "-" + d;
+  } catch (e) {}
+  var now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  function p2(n){ return (n < 10 ? "0" : "") + n; }
+  return now.getUTCFullYear() + "-" + p2(now.getUTCMonth() + 1) + "-" + p2(now.getUTCDate());
+}
+function bvHide(){
+  try {
+    var foot = $("site-foot");
+    if (foot) foot.classList.add("hidden");
+    var el = $("visitor-today");
+    if (el) el.textContent = "";
+  } catch (e) {}
+}
+function bvShow(count){
+  if (typeof count !== "number" || !isFinite(count) || count < 0) { bvHide(); return; }
+  try {
+    var foot = $("site-foot"), el = $("visitor-today");
+    if (!foot || !el) return;
+    el.textContent = "오늘 방문 " + Math.floor(count).toLocaleString("ko-KR") + "명";
+    foot.classList.remove("hidden");
+  } catch (e) { bvHide(); }
+}
+function bvParseRpcCount(data){
+  if (typeof data === "number") return data;
+  if (typeof data === "string" && data.trim() !== "" && isFinite(Number(data))) return Number(data);
+  if (data && Array.isArray(data) && data.length){
+    var first = data[0];
+    if (typeof first === "number") return first;
+    if (first && typeof first.count === "number") return first.count;
+    if (first && typeof first.increment_daily_visits === "number") return first.increment_daily_visits;
+  }
+  if (data && typeof data === "object"){
+    if (typeof data.count === "number") return data.count;
+    if (typeof data.increment_daily_visits === "number") return data.increment_daily_visits;
+  }
+  return null;
+}
+(function initDailyVisits(){
+  try {
+    var today = bvTodayKST();
+    var flagKey = "bv_visited_" + today;
+    var visited = false;
+    try { visited = !!localStorage.getItem(flagKey); } catch (e) { visited = false; }
+
+    if (!visited){
+      lbFetch("rpc/increment_daily_visits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      }).then(function(res){
+        return res.json();
+      }).then(function(data){
+        var count = bvParseRpcCount(data);
+        if (count == null || typeof count !== "number" || !isFinite(count)) { bvHide(); return; }
+        try { localStorage.setItem(flagKey, "1"); } catch (e) {}
+        bvShow(count);
+      }).catch(function(){ bvHide(); });
+    } else {
+      lbFetch("daily_visits?select=count&visit_date=eq." + encodeURIComponent(today))
+        .then(function(res){ return res.json(); })
+        .then(function(rows){
+          if (!rows || !rows.length || typeof rows[0].count !== "number" || !isFinite(rows[0].count)) { bvHide(); return; }
+          bvShow(rows[0].count);
+        }).catch(function(){ bvHide(); });
+    }
+  } catch (e) { bvHide(); }
+})();
 </script>
 </body>
 </html>
