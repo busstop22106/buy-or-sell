@@ -1399,19 +1399,49 @@ function shareText(){
   return "주식으로 돈 벌 감각, 진짜 있는지 테스트해봤다! [" + modeLabel + "] 나 " + state.score + "/" + QUIZZES.length + "점으로 칭호는 '" + r[0] + "' 떴다 ㅋㅋ 종목명 가린 진짜 차트만 보고 사고팔고를 맞히는 건데, " + shareHook() + " 👉 너도 3분 만에 판명받기";
 }
 
+function copyShareLink(url){
+  function done(){ toast("링크가 복사됐어요. 원하는 곳에 붙여넣어 공유하세요."); }
+  function fail(){ toast("복사에 실패했습니다. 주소창의 링크를 직접 복사해 주세요."); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done, function(){
+      if (!legacyCopy(url)) fail(); else done();
+    });
+  } else if (!legacyCopy(url)){
+    fail();
+  } else {
+    done();
+  }
+}
+function legacyCopy(text){
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
 function shareResult(){
   var text = shareText();
   var url = rankUrl(rankMetaFor(state.score, state.quizMode).key);
   var r = rankFor(state.score, state.quizMode);
-  if (navigator.share){
+  /* 모바일(터치 기기)에서는 OS 공유 시트, 데스크톱에서는 처음부터 링크 복사로 간다.
+     데스크톱 브라우저의 Web Share API는 지원이 들쭉날쭉해 이상하게 동작할 수 있기 때문이다. */
+  var isTouch = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches)
+    || (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && "ontouchstart" in window);
+  if (navigator.share && isTouch){
     trackEvent("share_click", { method: "web_share", score: state.score, mode: state.quizMode });
     navigator.share({ title: "나 '" + r[0] + "' 떴다! 너는 인간지표야, 차트의 신이야?", text: text, url: url }).catch(function(){});
-  } else if (navigator.clipboard && navigator.clipboard.writeText){
-    trackEvent("share_click", { method: "copy", score: state.score, mode: state.quizMode });
-    navigator.clipboard.writeText(text + " " + url).then(function(){ toast("공유 문구와 링크가 복사됐습니다. 원하는 곳에 붙여넣어 공유하세요."); },
-      function(){ toast("복사에 실패했습니다."); });
   } else {
-    toast("이 브라우저에서는 공유를 지원하지 않습니다.");
+    trackEvent("share_click", { method: "copy", score: state.score, mode: state.quizMode });
+    copyShareLink(url);
   }
 }
 
