@@ -3,17 +3,6 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>
-  /* 구버전 칭호 'beginner'(주식 초보)는 5점 체계에서 폐지됨 — 홈으로 즉시 리다이렉트 */
-  (function(){
-    try {
-      var rankKey = new URLSearchParams(window.location.search).get("rank");
-      if (rankKey === "beginner") {
-        window.location.replace(window.location.pathname);
-      }
-    } catch (e) {}
-  })();
-</script>
 <meta name="color-scheme" content="light dark" />
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F8FAFC" />
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B1120" />
@@ -21,14 +10,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <link rel="icon" href="data:," />
 <title>주식 매수·매도 퀴즈 — 차트만 보고 매수? 매도?</title>
-<meta name="description" content="종목명을 가린 실제 과거 주가 차트 5문제. 차트만 보고 지금이 살 때인지 팔 때인지 골라보세요. 선택하면 그 뒤 20거래일의 실제 차트와 당시 이야기가 펼쳐집니다." />
+<meta name="description" content="종목명을 가린 실제 과거 주가 차트 퀴즈. 실력 확인 5문제는 당시 상황과 가격이 항상 공개되고, 명예의 전당 10문제는 힌트 없이 풀어 리더보드에 도전합니다." />
 <meta name="google-site-verification" content="UtJ3DvlXhGPKUmjuQux0_LLbCuToQDlrVLC3QDb6vNk" />
 <meta name="naver-site-verification" content="95c9aaf439d1b17aa7b9807d8e8f2236743a7f1f" />
 <link rel="canonical" href="https://buy-or-sell.netlify.app/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="주식 매수·매도 퀴즈" />
 <meta property="og:title" content="차트만 보고 매수? 매도? — 주식 매수·매도 퀴즈" />
-<meta property="og:description" content="종목명을 가린 실제 과거 차트 5문제. 당신은 몇 점일까요?" />
+<meta property="og:description" content="실력 확인 5문제부터 명예의 전당 10문제까지. 당신은 몇 점일까요?" />
 <meta property="og:url" content="https://buy-or-sell.netlify.app/" />
 <meta property="og:image" content="https://busstop22106.github.io/buy-or-sell/assets/og-image.png" />
 <meta property="og:image:width" content="1200" />
@@ -37,7 +26,7 @@
 <meta property="og:locale" content="ko_KR" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="차트만 보고 매수? 매도? — 주식 매수·매도 퀴즈" />
-<meta name="twitter:description" content="종목명을 가린 실제 과거 차트 5문제. 당신은 몇 점일까요?" />
+<meta name="twitter:description" content="실력 확인 5문제부터 명예의 전당 10문제까지. 당신은 몇 점일까요?" />
 <meta name="twitter:image" content="https://buy-or-sell.netlify.app/assets/og-image.png" />
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-CWHRVHTF14"></script>
@@ -153,9 +142,6 @@
     background:var(--chip); border-radius:12px; padding:16px; font-size:14px; margin-bottom:16px;
   }
   .context-box b{color:var(--ink)}
-  .hint-area{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
-  .btn-hint{height:40px; padding:0 18px; font-size:14px}
-  .hint-area .hint-note{font-size:13px; color:var(--muted)}
 
   .chart-head{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline; justify-content:space-between; margin-bottom:8px}
   .chart-price{font-size:24px; font-weight:800; color:var(--ink); line-height:1.2}
@@ -270,8 +256,15 @@
   @media (max-width:640px){
     .lb-form{flex-direction:column}
     .lb-form .btn{width:100%; height:52px; font-size:16px}
+    .hall-cta .btn{width:100%; height:52px; font-size:16px}
     .lb-input{height:56px; font-size:17px}
   }
+
+  .hall-cta{margin-top:24px; padding-top:20px; border-top:1px solid var(--border-soft); text-align:left}
+  .hall-cta h3{font-size:16px; font-weight:700; color:var(--ink); margin:0}
+  .hall-cta p{font-size:13px; color:var(--muted); margin:6px 0 12px}
+  .mode-line{font-size:13px; font-weight:700; color:var(--primary); margin:0 0 8px}
+  #btn-start{height:56px; font-size:17px; padding:0 32px}
 
   /* ---------- Mobile (phones) ---------- */
   button{touch-action:manipulation}
@@ -346,17 +339,17 @@
       <h1>매수는 쉬운데,<br />매도는 진짜 어렵죠.</h1>
       <p class="lede">실제로 있었던 과거 주가 차트를 보여드립니다. 종목명은 가려져 있어요. 차트만 보고 <b>지금이 살 때인지, 팔 때인지</b> 골라보세요. 선택하면 그 뒤 20거래일의 실제 차트가 펼쳐지고, 어떤 선택이 옳았는지 알려드립니다.</p>
       <div class="start-row">
-        <button class="btn btn-primary" id="btn-start" type="button">퀴즈 시작하기 · 5문제</button>
+        <button class="btn btn-primary" id="btn-start" type="button">내 주식 실력 확인하기 · 5문제</button>
       </div>
       <p class="caption note-line">차트는 Yahoo Finance의 실제 일봉 데이터(시가·고가·저가·종가·거래량)를 그대로 사용했습니다. 정답은 선택 시점 종가 대비 20거래일 뒤 종가의 방향으로 판정합니다.</p>
-      <p class="caption note-line">가격과 당시 상황은 처음엔 가려져 있어요. 궁금한 문제에서는 '힌트보기'로 공개할 수 있고, 힌트는 5문제당 3번까지만 쓸 수 있습니다.</p>
+      <p class="caption note-line">실력 확인(5문제)에서는 당시 상황과 1주당 가격이 처음부터 공개됩니다. 결과 화면에서 이어지는 명예의 전당(10문제)에서는 힌트 없이 풀어야 하고, 리더보드에 등록할 수 있어요.</p>
     </div>
     <div class="card lb-card fade-in" id="leaderboard-card">
       <div class="lb-head">
-        <h2>리더보드</h2>
+        <h2>명예의 전당 리더보드</h2>
         <button class="btn btn-ghost lb-refresh" id="btn-lb-refresh" type="button">새로고침</button>
       </div>
-      <p class="lb-sub">5문제 퀴즈 점수를 등록한 사람들의 순위예요. 점수가 같으면 힌트를 덜 쓴 순서, 그다음 먼저 등록한 순서입니다.</p>
+      <p class="lb-sub">명예의 전당 모드(10문제, 힌트 없음)를 푼 사람들의 순위예요. 점수가 같으면 먼저 등록한 순서입니다.</p>
       <div class="lb-status" id="lb-status">순위를 불러오는 중입니다.</div>
       <div class="lb-list hidden" id="lb-list"></div>
       <p class="lb-my-note hidden" id="lb-my-note"></p>
@@ -364,7 +357,7 @@
     <div class="how-wrap fade-in">
       <div class="how-item">
         <div class="how-num">1</div>
-        <div><h3>차트만 보고 판단</h3><p>일봉 캔들 + 거래량 + 5일·20일 이동평균선. 종목명과 회사 정보는 공개 전까지 가려집니다.</p></div>
+        <div><h3>실력 확인 · 5문제</h3><p>당시 상황과 1주당 가격이 처음부터 공개돼요. 일봉 캔들 + 거래량 + 5일·20일 이동평균선을 보고 가볍게 풀고, 결과는 친구와 공유만 하면 됩니다.</p></div>
       </div>
       <div class="how-item">
         <div class="how-num">2</div>
@@ -374,6 +367,10 @@
         <div class="how-num">3</div>
         <div><h3>미래가 펼쳐집니다</h3><p>그 뒤 20거래일의 실제 차트가 애니메이션으로 이어지고, 당시 무슨 일이 있었는지까지 공개됩니다.</p></div>
       </div>
+      <div class="how-item">
+        <div class="how-num">4</div>
+        <div><h3>명예의 전당 · 10문제</h3><p>실력 확인 결과 화면에서 도전할 수 있어요. 힌트 없이 10문제를 풀고, 닉네임으로 리더보드에 이름을 올리세요.</p></div>
+      </div>
     </div>
   </section>
 
@@ -382,6 +379,7 @@
     <div class="hud">
       <div class="hud-left">
         <span class="q-badge" id="hud-q">문제 1 / 5</span>
+        <span class="market-badge" id="hud-mode">실력 확인</span>
         <span class="market-badge" id="hud-market">미국 대형주</span>
       </div>
       <span class="score-chip" id="hud-score-wrap">현재 <b id="hud-score">0</b>점</span>
@@ -415,6 +413,7 @@
   <!-- ============ RESULT ============ -->
   <section id="screen-result" class="hidden">
     <div class="card result-hero fade-in">
+      <p class="mode-line" id="result-mode">실력 확인 결과 · 5문제</p>
       <p class="result-title">당신의 칭호는</p>
       <div class="result-rank" id="result-rank">주식의 신</div>
       <div class="result-score" id="result-score">5점 / 5점</div>
@@ -434,6 +433,11 @@
         </div>
         <p class="lb-submit-status" id="lb-submit-status"></p>
       </div>
+      <div class="hall-cta hidden" id="hall-cta-box">
+        <h3>명예의 전당에 도전해보세요</h3>
+        <p>힌트 없이 10문제를 풀면 닉네임으로 리더보드에 등록할 수 있어요. 실력 확인보다 한 단계 어려운 진짜 승부입니다.</p>
+        <button class="btn btn-primary" id="btn-hall-start" type="button">명예의 전당 도전하기 · 10문제</button>
+      </div>
     </div>
     <div class="card" style="margin-top:16px">
       <h2>문제별 복기</h2>
@@ -447,10 +451,10 @@
     <div class="card result-hero fade-in">
       <p class="result-title">친구가 받은 칭호는</p>
       <div class="result-rank" id="rank-title">주식의 신</div>
-      <div class="result-score" id="rank-score">5점 / 5점 구간</div>
+      <div class="result-score" id="rank-score">10점 / 10점 구간</div>
       <p class="result-desc" id="rank-desc"></p>
       <div class="result-actions">
-        <button class="btn btn-primary" id="btn-rank-start" type="button">나도 도전하기 · 5문제</button>
+        <button class="btn btn-primary" id="btn-rank-start" type="button">명예의 전당 도전하기 · 10문제</button>
         <button class="btn btn-ghost" id="btn-rank-home" type="button">퀴즈 소개 보기</button>
       </div>
     </div>
@@ -491,11 +495,10 @@ var POOL = [{"sym": "AAPL", "name": "애플", "en": "Apple · NASDAQ", "cur": "$
 
 var QUIZZES = POOL.slice(0, 5);
 
-/* ---------------- 힌트 방식 통일 ----------------
-   난이도 선택은 없앴다. 모든 퀴즈는 보통 방식(45거래일 차트)으로 진행하고,
-   가격(상단 헤더·Y축 라벨)과 당시 상황은 처음엔 가려 둔다. 문제마다 '힌트보기'를
-   누르면 그 문제의 가격·상황이 공개되며, 힌트는 퀴즈 1회당 총 3회(데일리는 1회)까지만
-   쓸 수 있다. 힌트 사용은 정답 판정·점수에 영향을 주지 않는다. */
+/* ---------------- 두 가지 모드 ----------------
+   casual(실력 확인): 5문제. 당시 상황·1주당 가격(상단 헤더·Y축 라벨)을 처음부터 항상 공개한다.
+   hall(명예의 전당): 10문제. 당시 상황·가격을 답하기 전까지 모두 숨긴다. 힌트보기 버튼은 두 모드 모두 없다.
+   리더보드 등록은 hall 결과에서만 가능하고, 칭호 체계는 모드별로 다르다(5점/10점). */
 (function cleanupOldSettings(){
   /* 예전 난이도·테마 선택 기능의 localStorage 잔재 정리 */
   try {
@@ -504,7 +507,7 @@ var QUIZZES = POOL.slice(0, 5);
   } catch (e) {}
   document.documentElement.removeAttribute("data-theme");
 })();
-var state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false };
+var state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false, quizMode: "casual" };
 
 function $(id){ return document.getElementById(id); }
 function fmtPrice(v, q){
@@ -566,8 +569,8 @@ function buildChart(q, visibleCount){
   var ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#0F172A";
 
   var s = '<svg class="chart-svg" viewBox="0 0 ' + CW + ' ' + CH + '" role="img" aria-label="일봉 캔들차트와 거래량">';
-  // grid + price labels — 가격 라벨은 힌트를 썼거나 이미 답한 뒤에만 그린다
-  var showPrices = !state || state.hintUsed || state.revealed;
+  // grid + price labels — 가격 라벨은 실력 확인 모드(항상 공개)이거나 이미 답한 뒤에만 그린다
+  var showPrices = !state || state.hintUsed || state.revealed || state.quizMode === "casual";
   for (var g = 0; g <= D.gridSteps; g++){
     var p = min + (max - min) * g / D.gridSteps, y = Y(p);
     s += '<line x1="' + PADL + '" y1="' + y + '" x2="' + (CW - PADR) + '" y2="' + y + '" stroke="' + grid + '" stroke-width="1"/>';
@@ -627,47 +630,35 @@ function renderDots(){
   $("dots").innerHTML = html;
 }
 
-function buildFullSet(){
+function buildFullSet(count){
   var arr = POOL.slice();
   for (var i = arr.length - 1; i > 0; i--){
     var j = Math.floor(Math.random() * (i + 1));
     var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
   }
-  return arr.slice(0, 5);
+  return arr.slice(0, count);
 }
 
-function startQuiz(){
-  QUIZZES = buildFullSet();
-  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 3, hintUsed: false };
-  trackEvent("quiz_start", { question_count: QUIZZES.length });
+function startQuiz(mode){
+  var hall = mode === "hall";
+  QUIZZES = buildFullSet(hall ? 10 : 5);
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: !hall, quizMode: hall ? "hall" : "casual" };
+  trackEvent("quiz_start", { question_count: QUIZZES.length, mode: state.quizMode });
   showScreen("quiz");
   loadQuestion();
 }
 
-/* 힌트 영역 — 상황 박스가 있던 자리에 힌트보기 버튼을 두고, 클릭하면 그 자리에
-   당시의 상황 박스가 나타나며 가격 헤더와 Y축 라벨도 함께 공개된다. */
+/* 상황 박스 — 실력 확인 모드에서는 당시 상황을 처음부터 보여주고,
+   명예의 전당 모드에서는 박스 자체를 숨긴다. 힌트보기 버튼은 두 모드 모두 없다. */
 function renderHintArea(q){
   var box = $("context-box");
-  if (state.hintUsed){
+  if (state.quizMode === "casual"){
+    box.classList.remove("hidden");
     box.innerHTML = "<b>당시의 상황</b> · " + q.hint;
-    return;
-  }
-  if (state.hintsLeft > 0){
-    box.innerHTML = '<div class="hint-area"><button class="btn btn-ghost btn-hint" id="btn-hint" type="button">힌트보기 (남은 ' + state.hintsLeft + '회)</button><span class="hint-note">힌트를 쓰면 당시 상황과 1주당 가격이 공개돼요</span></div>';
-    $("btn-hint").addEventListener("click", useHint);
   } else {
-    box.innerHTML = '<div class="hint-area"><button class="btn btn-ghost btn-hint" type="button" disabled>힌트 소진</button><span class="hint-note">이번 퀴즈에서 쓸 수 있는 힌트를 모두 사용했어요</span></div>';
+    box.classList.add("hidden");
+    box.innerHTML = "";
   }
-}
-function useHint(){
-  if (state.revealed || state.hintUsed || state.hintsLeft <= 0) return;
-  state.hintsLeft--;
-  state.hintUsed = true;
-  var q = QUIZZES[state.idx];
-  trackEvent("hint_use", { question_number: state.idx + 1, hints_left: state.hintsLeft });
-  renderHintArea(q);
-  $("chart-price-wrap").classList.remove("hidden");
-  $("chart-host").innerHTML = buildChart(q, state.visible);
 }
 
 function loadQuestion(){
@@ -675,13 +666,15 @@ function loadQuestion(){
   state.revealed = false;
   state.visible = state.preShown;
   $("hud-q").textContent = "문제 " + (state.idx + 1) + " / " + QUIZZES.length;
+  $("hud-mode").textContent = state.quizMode === "hall" ? "명예의 전당 · 힌트 없음" : "실력 확인";
   $("hud-market").textContent = marketLabel(q) + " · 종목명 비공개";
   var scoreWrap = $("hud-score-wrap");
   if (scoreWrap) scoreWrap.innerHTML = '현재 <b id="hud-score">' + state.score + "</b>점";
   $("progress-bar").style.width = (state.idx / QUIZZES.length * 100) + "%";
-  state.hintUsed = false;
+  state.hintUsed = state.quizMode === "casual";
   renderHintArea(q);
-  $("chart-price-wrap").classList.add("hidden");
+  if (state.quizMode === "casual") $("chart-price-wrap").classList.remove("hidden");
+  else $("chart-price-wrap").classList.add("hidden");
   $("chart-price").textContent = fmtPrice(q.base, q);
   $("chart-unit").textContent = q.cur === "$" ? "달러" : "원";
   $("chart-date").textContent = "기준일 " + q.decisionDate + " 종가 기준 · 최근 " + state.preShown + "거래일";
@@ -708,7 +701,8 @@ function choose(pick){
     question_number: state.idx + 1,
     symbol: q.sym,
     choice: pick,
-    correct: correct
+    correct: correct,
+    mode: state.quizMode
   });
   var hsEl = $("hud-score"); if (hsEl) hsEl.textContent = state.score;
   var row = $("choice-row");
@@ -757,7 +751,16 @@ function showVerdict(pick, correct){
   $("btn-next").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-function rankFor(score){
+function rankFor(score, mode){
+  if (mode === "hall"){
+    if (score >= 10) return ["주식의 신", "10문제 전부, 폭등과 폭락의 갈림길을 정확히 읽었습니다. 힌트 없이 해냈다는 게 더 대단하네요."];
+    if (score >= 9) return ["월가의 전설", "한 문제 차이로 신의 영역을 놓쳤습니다. 힌트 없는 차트를 읽는 눈이 프로 수준이에요."];
+    if (score >= 8) return ["차트 마스터", "대부분의 변곡점을 잡아냈습니다. 손절과 익절의 감각이 남다르네요."];
+    if (score >= 6) return ["눈치 빠른 개미", "과반의 갈림길을 정확히 읽어냈습니다. 시장의 분위기를 읽는 눈이 제법 있네요."];
+    if (score >= 4) return ["평범한 개미", "맞힐 땐 맞히고 틀릴 땐 틀리는, 딱 보통의 투자자입니다. 매도가 어렵다는 걸 몸으로 느꼈죠?"];
+    if (score >= 2) return ["주식 초보", "아직 차트와 친해지는 중입니다. 몇 번 더 풀어보면 변곡점을 읽는 눈이 생길 거예요."];
+    return ["존버 입문자", "거의 전부 반대로 갔습니다. 역지표로 유명해질 자질이 있어요. 다음엔 반대로 눌러보세요."];
+  }
   if (score >= 5) return ["주식의 신", "5문제 전부, 폭등과 폭락의 갈림길을 정확히 읽었습니다. 매도 타이밍까지 완벽하네요."];
   if (score >= 4) return ["월가의 전설", "한 문제 차이로 신의 영역을 놓쳤습니다. 차트 읽는 눈이 프로 수준이에요."];
   if (score >= 3) return ["차트 마스터", "대부분의 변곡점을 잡아냈습니다. 손절과 익절의 감각이 남다르네요."];
@@ -766,9 +769,10 @@ function rankFor(score){
   return ["존버 입문자", "전부 반대로 갔습니다. 역지표로 유명해질 자질이 있어요. 다음엔 반대로 눌러보세요."];
 }
 
-/* 칭호 6단계 메타데이터 — ?rank=<key> 공유 딥링크와 칭호별 랜딩 화면의 기준표.
+/* 칭호 메타데이터 — 실력 확인(5점)은 RANKS_CASUAL, 명예의 전당(10점)은 RANKS_HALL.
+   ?rank=<key> 공유 딥링크·리더보드·칭호별 랜딩 화면은 명예의 전당(RANKS_HALL) 기준이다.
    구간·문구는 rankFor와 반드시 일치시킬 것. sampleIdx는 POOL의 대표 복기 문제 인덱스. */
-var RANKS = [
+var RANKS_CASUAL = [
   { key: "god",        min: 5, range: "5점",    sampleIdx: 4  },
   { key: "legend",     min: 4, range: "4점",    sampleIdx: 10 },
   { key: "master",     min: 3, range: "3점",    sampleIdx: 0  },
@@ -776,19 +780,31 @@ var RANKS = [
   { key: "ordinary",   min: 1, range: "1점",    sampleIdx: 8  },
   { key: "hodl",       min: 0, range: "0점",    sampleIdx: 2  }
 ];
-function rankMetaFor(score){
+var RANKS_HALL = [
+  { key: "god",        min: 10, range: "10점",   sampleIdx: 4  },
+  { key: "legend",     min: 9,  range: "9점",    sampleIdx: 10 },
+  { key: "master",     min: 8,  range: "8점",    sampleIdx: 0  },
+  { key: "sharp",      min: 6,  range: "6~7점",  sampleIdx: 5  },
+  { key: "ordinary",   min: 4,  range: "4~5점",  sampleIdx: 8  },
+  { key: "beginner",   min: 2,  range: "2~3점",  sampleIdx: 6  },
+  { key: "hodl",       min: 0,  range: "0~1점",  sampleIdx: 2  }
+];
+function ranksForMode(mode){ return mode === "hall" ? RANKS_HALL : RANKS_CASUAL; }
+function rankMetaFor(score, mode){
+  var RANKS = ranksForMode(mode);
   for (var i = 0; i < RANKS.length; i++){
     if (score >= RANKS[i].min){
-      var r = rankFor(score);
+      var r = rankFor(score, mode);
       return { key: RANKS[i].key, range: RANKS[i].range, sampleIdx: RANKS[i].sampleIdx, title: r[0], desc: r[1] };
     }
   }
   return null;
 }
-function rankMetaByKey(key){
+function rankMetaByKey(key, mode){
+  var RANKS = ranksForMode(mode);
   for (var i = 0; i < RANKS.length; i++){
     if (RANKS[i].key === key){
-      var r = rankFor(RANKS[i].min);
+      var r = rankFor(RANKS[i].min, mode);
       return { key: RANKS[i].key, range: RANKS[i].range, sampleIdx: RANKS[i].sampleIdx, title: r[0], desc: r[1] };
     }
   }
@@ -877,7 +893,7 @@ function renderLeaderboard(rows){
   var bestMine = 0;
   var bestMineHints = 0;
   rows.forEach(function(row, i){
-    var meta = rankMetaByKey(row.rank_key);
+    var meta = rankMetaByKey(row.rank_key, "hall");
     var title = meta ? meta.title : (row.rank_key || "");
     var mine = !!myIds[row.id];
     if (mine && !bestMine){ bestMine = i + 1; bestMineHints = lbHints(row); }
@@ -894,7 +910,7 @@ function renderLeaderboard(rows){
     note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (" + lbHintText(bestMineHints) + ")";
     note.classList.remove("hidden");
   } else if (my.last){
-    var lm = rankMetaByKey(my.last.rank_key);
+    var lm = rankMetaByKey(my.last.rank_key, "hall");
     note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", " + lbHintText(lbHints(my.last)) + ") · 아직 상위 10위에는 없어요.";
     note.classList.remove("hidden");
   } else {
@@ -947,6 +963,7 @@ function lbResetSubmit(){
 }
 function submitLeaderboard(){
   if (lbSubmitted) return;
+  if (!state || state.quizMode !== "hall") return;
   var input = $("lb-nickname");
   var nick = (input.value || "").trim().slice(0, 12);
   var st = $("lb-submit-status");
@@ -961,8 +978,8 @@ function submitLeaderboard(){
   btn.textContent = "등록 중…";
   st.className = "lb-submit-status";
   st.textContent = "";
-  var meta = rankMetaFor(state.score);
-  var hintsUsed = Math.max(0, 3 - (typeof state.hintsLeft === "number" ? state.hintsLeft : 3));
+  var meta = rankMetaFor(state.score, "hall");
+  var hintsUsed = 0;
   var payload = { nickname: nick, score: state.score, rank_key: meta ? meta.key : "", hints_used: hintsUsed };
   lbFetch("leaderboard", {
     method: "POST",
@@ -979,7 +996,7 @@ function submitLeaderboard(){
       my.last = row;
       lbSaveMy(my);
     }
-    trackEvent("leaderboard_submit", { score: state.score, rank: rankFor(state.score)[0], rank_key: payload.rank_key });
+    trackEvent("leaderboard_submit", { score: state.score, rank: rankFor(state.score, "hall")[0], rank_key: payload.rank_key, mode: "hall" });
     btn.textContent = "등록 완료";
     if (row){
       lbMyRank(row).then(function(rank){
@@ -1007,17 +1024,22 @@ function submitLeaderboard(){
 function showResult(){
   $("progress-bar").style.width = "100%";
   showScreen("result");
-  var r = rankFor(state.score);
+  var hall = state.quizMode === "hall";
+  var r = rankFor(state.score, state.quizMode);
   trackEvent("quiz_complete", {
     score: state.score,
     total: QUIZZES.length,
-    rank: r[0]
+    rank: r[0],
+    mode: state.quizMode
   });
+  $("result-mode").textContent = hall ? "명예의 전당 결과 · 10문제 · 힌트 없음" : "실력 확인 결과 · 5문제";
   $("result-rank").textContent = r[0];
   $("result-score").textContent = state.score + "점 / " + QUIZZES.length + "점";
   $("result-desc").textContent = r[1];
   $("share-preview").textContent = "공유 문구: \"" + shareText() + "\"";
-  lbResetSubmit();
+  $("lb-submit-box").classList.toggle("hidden", !hall);
+  $("hall-cta-box").classList.toggle("hidden", hall);
+  if (hall) lbResetSubmit();
   $("btn-kakao").classList.toggle("hidden", !kakaoReady());
   var html = "";
   QUIZZES.forEach(function(q, i){
@@ -1034,7 +1056,7 @@ function showResult(){
 /* ---------------- Rank landing (?rank=<key>) ---------------- */
 function showRankLanding(meta){
   $("rank-title").textContent = meta.title;
-  $("rank-score").textContent = meta.range + " / 5점 구간";
+  $("rank-score").textContent = meta.range + " / 10점 구간";
   $("rank-desc").textContent = meta.desc;
   var q = POOL[meta.sampleIdx];
   var retClass = q.chg > 0 ? "up" : "down";
@@ -1064,18 +1086,18 @@ function toast(msg){
 var SITE_URL = "https://busstop22106.github.io/buy-or-sell/";
 
 function shareText(){
-  var r = rankFor(state.score);
+  var r = rankFor(state.score, state.quizMode);
   return "나 " + state.score + "/" + QUIZZES.length + "점, 칭호는 '" + r[0] + "'! 종목명을 가린 실제 과거 차트만 보고 매수·매도를 골랐어요. 너는 몇 점? 도전해봐 👉";
 }
 
 function shareResult(){
   var text = shareText();
-  var url = rankUrl(rankMetaFor(state.score).key);
+  var url = rankUrl(rankMetaFor(state.score, state.quizMode).key);
   if (navigator.share){
-    trackEvent("share_click", { method: "web_share", score: state.score });
+    trackEvent("share_click", { method: "web_share", score: state.score, mode: state.quizMode });
     navigator.share({ title: "주식 매수·매도 퀴즈", text: text, url: url }).catch(function(){});
   } else if (navigator.clipboard && navigator.clipboard.writeText){
-    trackEvent("share_click", { method: "copy", score: state.score });
+    trackEvent("share_click", { method: "copy", score: state.score, mode: state.quizMode });
     navigator.clipboard.writeText(text + " " + url).then(function(){ toast("공유 문구와 링크가 복사됐습니다. 원하는 곳에 붙여넣어 공유하세요."); },
       function(){ toast("복사에 실패했습니다."); });
   } else {
@@ -1089,9 +1111,9 @@ function shareKakao(){
     toast("카카오톡 공유를 불러오지 못했습니다. 링크 복사로 공유해 주세요.");
     return;
   }
-  trackEvent("share_click", { method: "kakao", score: state.score });
-  var r = rankFor(state.score);
-  var rUrl = rankUrl(rankMetaFor(state.score).key);
+  trackEvent("share_click", { method: "kakao", score: state.score, mode: state.quizMode });
+  var r = rankFor(state.score, state.quizMode);
+  var rUrl = rankUrl(rankMetaFor(state.score, state.quizMode).key);
   try {
     Kakao.Share.sendDefault({
       objectType: "feed",
@@ -1136,28 +1158,25 @@ window.addEventListener("orientationchange", function(){
   }, 220);
 });
 
-$("btn-start").addEventListener("click", startQuiz);
+$("btn-start").addEventListener("click", function(){ startQuiz("casual"); });
+$("btn-hall-start").addEventListener("click", function(){ startQuiz("hall"); });
 $("btn-rank-start").addEventListener("click", function(){
-  trackEvent("rank_landing_start", {});
-  startQuiz();
+  trackEvent("rank_landing_start", { mode: "hall" });
+  startQuiz("hall");
 });
 $("btn-rank-home").addEventListener("click", function(){ showScreen("intro"); });
 (function(){
   try {
     var key = new URLSearchParams(window.location.search).get("rank");
     if (key){
-      if (key === "beginner") {
-        window.location.replace(window.location.pathname);
-        return;
-      }
-      var meta = rankMetaByKey(key);
+      var meta = rankMetaByKey(key, "hall");
       if (meta) showRankLanding(meta);
     }
   } catch (e) {}
 })();
 $("btn-buy").addEventListener("click", function(){ choose("buy"); });
 $("btn-sell").addEventListener("click", function(){ choose("sell"); });
-$("btn-restart").addEventListener("click", startQuiz);
+$("btn-restart").addEventListener("click", function(){ startQuiz(state.quizMode || "casual"); });
 $("btn-share").addEventListener("click", shareResult);
 $("btn-kakao").addEventListener("click", shareKakao);
 if (!kakaoReady()) $("btn-kakao").classList.add("hidden");
