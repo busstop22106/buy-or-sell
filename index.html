@@ -849,6 +849,9 @@ function lbHints(row){
   var h = row ? row.hints_used : null;
   return (typeof h === "number" && isFinite(h) && h >= 0) ? Math.floor(h) : 0;
 }
+function lbHintText(n){
+  return n === 0 ? "힌트 사용 안함" : "힌트 " + n + "개 사용";
+}
 function renderLeaderboard(rows){
   var status = $("lb-status"), list = $("lb-list"), note = $("lb-my-note");
   var my = lbLoadMy();
@@ -872,18 +875,18 @@ function renderLeaderboard(rows){
     html += '<div class="lb-row' + (mine ? " mine" : "") + '">';
     html += '<span class="lb-pos' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>";
     html += '<div class="lb-main"><div class="lb-name">' + lbEscape(row.nickname) + (mine ? '<span class="lb-me">나</span>' : "") + '</div><div class="lb-meta">' + lbEscape(title) + " · " + lbDate(row.created_at) + "</div></div>";
-    html += '<span class="lb-score">' + row.score + '점<span class="lb-hints">힌트 ' + lbHints(row) + "개</span></span>";
+    html += '<span class="lb-score">' + row.score + '점<span class="lb-hints">' + lbHintText(lbHints(row)) + "</span></span>";
     html += "</div>";
   });
   status.classList.add("hidden");
   list.classList.remove("hidden");
   list.innerHTML = html;
   if (bestMine){
-    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (힌트 " + bestMineHints + "개 사용)";
+    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (" + lbHintText(bestMineHints) + ")";
     note.classList.remove("hidden");
   } else if (my.last){
     var lm = rankMetaByKey(my.last.rank_key);
-    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", 힌트 " + lbHints(my.last) + "개) · 아직 상위 10위에는 없어요.";
+    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", " + lbHintText(lbHints(my.last)) + ") · 아직 상위 10위에는 없어요.";
     note.classList.remove("hidden");
   } else {
     note.classList.add("hidden");
