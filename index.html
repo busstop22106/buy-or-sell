@@ -103,6 +103,51 @@
   .start-row{margin-top:24px; display:flex; flex-wrap:wrap; gap:12px; align-items:center}
   .note-line{margin-top:16px}
 
+  /* ---------- Intro game preview carousel ---------- */
+  .preview{
+    margin:20px auto 0; max-width:660px; background:var(--bg);
+    border:1px solid var(--border); border-radius:14px; padding:14px;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .preview-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px}
+  .preview-title{font-size:13px; font-weight:700; color:var(--ink)}
+  .preview-cta{font-size:12px; font-weight:600; color:var(--primary)}
+  .preview-viewport{overflow:hidden}
+  .preview-track{display:flex; transition:transform .55s cubic-bezier(.16,1,.3,1)}
+  .preview-slide{flex:0 0 100%; min-width:0}
+  .pv-top{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px}
+  .pv-badge{font-size:12px; padding:4px 11px}
+  .preview .context-box{margin-bottom:10px; padding:11px 13px; font-size:13px; line-height:1.55}
+  .preview .chart-head{margin-bottom:2px}
+  .preview .chart-price{font-size:20px}
+  .preview .caption{font-size:12px}
+  .preview .choice-row{margin-top:12px; gap:10px}
+  .preview .btn-buy,.preview .btn-sell{
+    height:52px; font-size:16px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .preview .btn-buy small,.preview .btn-sell small{font-size:11px}
+  .preview-foot{display:flex; align-items:center; gap:10px; margin-top:12px}
+  .preview-arrow{
+    width:32px; height:32px; flex:none; border-radius:999px; padding:0;
+    background:var(--card); border:1px solid var(--border); color:var(--ink);
+    font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .preview-arrow:active{transform:scale(.94)}
+  .preview-dots{flex:1; display:flex; gap:6px; align-items:center; justify-content:center}
+  .preview-dot{
+    width:8px; height:8px; border-radius:999px; border:none; padding:0;
+    background:var(--track); transition:all .3s; -webkit-tap-highlight-color:transparent;
+  }
+  .preview-dot.on{width:22px; background:var(--primary)}
+  @media (max-width:640px){
+    .preview{margin-top:16px; padding:12px}
+    .preview .chart-price{font-size:19px}
+    .preview .legend{display:none}
+    .preview .btn-buy,.preview .btn-sell{height:50px; font-size:15px}
+  }
+
   /* ---------- Buttons ---------- */
   button{font-family:inherit; letter-spacing:inherit; cursor:pointer}
   .btn{
@@ -270,6 +315,7 @@
   .result-lb p.desc{font-size:13px; color:var(--muted); margin:6px 0 0}
   .result-lb-panel{margin-top:10px}
   .result-lb-panel .lb-head{margin-top:0}
+  #review-card.review-inside{margin-top:24px; padding:20px 0 0; border:none; border-top:1px solid var(--border-soft); border-radius:0; box-shadow:none; background:transparent; text-align:left}
   .result-home-inside{margin-top:16px; padding-top:16px; border-top:1px solid var(--border-soft); display:flex; justify-content:center}
   .result-home-inside .btn{min-width:200px}
   @media (max-width:640px){
@@ -349,6 +395,20 @@
     <div class="card intro-hero fade-in">
       <h1>매수는 쉬운데,<br />매도는 진짜 어렵죠.</h1>
       <p class="lede">실제로 있었던 과거 주가 차트를 보여드립니다. 종목명은 가려져 있어요. 차트만 보고 <b>지금이 살 때인지, 팔 때인지</b> 골라보세요. 선택하면 그 뒤 20거래일의 실제 차트가 펼쳐지고, 어떤 선택이 옳았는지 알려드립니다.</p>
+      <div class="preview" id="preview" role="group" aria-label="실제 게임 화면 미리보기 — 누르면 퀴즈가 시작됩니다">
+        <div class="preview-head">
+          <span class="preview-title">실제 게임 화면 미리보기</span>
+          <span class="preview-cta">눌러서 바로 시작하기</span>
+        </div>
+        <div class="preview-viewport">
+          <div class="preview-track" id="preview-track"></div>
+        </div>
+        <div class="preview-foot">
+          <button class="preview-arrow" id="preview-prev" type="button" aria-label="이전 미리보기">‹</button>
+          <div class="preview-dots" id="preview-dots"></div>
+          <button class="preview-arrow" id="preview-next" type="button" aria-label="다음 미리보기">›</button>
+        </div>
+      </div>
       <div class="start-row">
         <button class="btn btn-primary" id="btn-start" type="button">내 주식 실력 확인하기 · 5문제</button>
       </div>
@@ -423,7 +483,7 @@
 
   <!-- ============ RESULT ============ -->
   <section id="screen-result" class="hidden">
-    <div class="card result-hero fade-in">
+    <div class="card result-hero fade-in" id="result-hero-card">
       <p class="mode-line" id="result-mode">실력 확인 결과 · 5문제</p>
       <p class="result-title">당신의 칭호는</p>
       <div class="result-rank" id="result-rank">주식의 신</div>
@@ -467,7 +527,7 @@
         <button class="btn btn-ghost btn-go-home" id="btn-result-home" type="button">첫 화면으로</button>
       </div>
     </div>
-    <div class="card" style="margin-top:16px">
+    <div class="card" style="margin-top:16px" id="review-card">
       <h2>문제별 복기</h2>
       <div class="review-list" id="review-list"></div>
       <p class="caption" style="margin-top:16px">수익률은 각 문제의 기준일 종가 대비 20거래일 뒤 종가 기준이며, 데이터 출처는 Yahoo Finance 일봉입니다. 실제 투자는 차트 하나만으로 판단할 수 없습니다.</p>
@@ -546,10 +606,10 @@ function fmtPct(v){ return (v > 0 ? "+" : "") + v.toFixed(1) + "%"; }
 function marketLabel(q){ return q.sym.indexOf(".KS") > -1 ? "한국 대형주" : "미국 대형주"; }
 
 /* ---------------- Chart ---------------- */
-function chartDims(){
+function chartDims(hostEl){
   // Render the SVG at (roughly) the on-screen pixel width so axis labels and
   // dates stay legible on phones instead of shrinking with a fixed 720 viewBox.
-  var host = $("chart-host");
+  var host = hostEl || $("chart-host");
   var w = host && host.clientWidth ? host.clientWidth : (window.innerWidth || 720);
   var CW = Math.max(300, Math.min(720, Math.round(w)));
   var narrow = CW < 560;
@@ -568,8 +628,8 @@ function chartDims(){
   };
 }
 
-function buildChart(q, visibleCount){
-  var D = chartDims();
+function buildChart(q, visibleCount, hostEl){
+  var D = chartDims(hostEl);
   var CW = D.CW, PH = D.PH, VH = D.VH, GAP = D.GAP, AXIS = D.AXIS, PADL = D.PADL, PADR = D.PADR, PADT = D.PADT;
   var CH = PADT + PH + GAP + VH + AXIS;
   var startIdx = state && state.startIdx ? state.startIdx : 0;
@@ -644,6 +704,9 @@ function showScreen(name){
     $("screen-" + k).classList.toggle("hidden", k !== name);
   });
   window.scrollTo({ top: 0 });
+  if (name === "intro" && typeof renderPreviewCharts === "function"){
+    setTimeout(renderPreviewCharts, 30);
+  }
 }
 
 function renderDots(){
@@ -1144,9 +1207,31 @@ function showResult(){
   $("share-preview").textContent = "공유 문구: \"" + shareText() + "\"";
   $("lb-submit-box").classList.toggle("hidden", !hall);
   $("hall-cta-box").classList.toggle("hidden", hall);
-  resultLbLoaded = false;
-  loadResultLeaderboard();
-  if (hall) lbResetSubmit();
+  (function(){
+    var lbBox = $("result-lb-box");
+    var reviewCard = $("review-card");
+    var heroCard = $("result-hero-card");
+    var hallBox = $("hall-cta-box");
+    var section = $("screen-result");
+    if (!reviewCard || !heroCard || !section) return;
+    if (hall){
+      if (lbBox) lbBox.classList.remove("hidden");
+      reviewCard.classList.remove("review-inside");
+      reviewCard.style.marginTop = "16px";
+      if (reviewCard.parentNode !== section){
+        section.insertBefore(reviewCard, heroCard.nextSibling);
+      }
+      resultLbLoaded = false;
+      loadResultLeaderboard();
+      lbResetSubmit();
+    } else {
+      if (lbBox) lbBox.classList.add("hidden");
+      reviewCard.classList.add("review-inside");
+      reviewCard.style.marginTop = "";
+      /* 캐주얼 순서: 공유/카톡/다시풀기(hero 상단) → 문제별 복기 → 명예의 전당 도전 → 첫 화면으로 */
+      heroCard.insertBefore(reviewCard, hallBox);
+    }
+  })();
   $("btn-kakao").classList.toggle("hidden", !kakaoReady());
   var html = "";
   QUIZZES.forEach(function(q, i){
@@ -1299,6 +1384,139 @@ $("btn-result-lb-refresh").addEventListener("click", function(){ resultLbLoaded 
   var rh = $("btn-result-home");
   if (rh && !rh.classList.contains("btn-go-home")) rh.addEventListener("click", goHomeFromResult);
 })();
+/* ---------------- Intro preview carousel ----------------
+   첫 화면 히어로에서 실제 문제 4개를 퀴즈 화면 그대로 롤링한다.
+   차트는 퀴즈와 같은 buildChart를 재사용하고, 데이터는 POOL의 실제 문제다. */
+var PVQS = [], pvIdx = 0, pvTimer = null, pvPaused = false, pvBuilt = false, pvSwipeAt = 0;
+var PV_REDUCED = false;
+try { PV_REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+function pickPreviewQuestions(){
+  var used = [], picks = [];
+  function add(q){ if (q && used.indexOf(q) === -1){ used.push(q); picks.push(q); } }
+  var desc = POOL.slice().sort(function(a, b){ return b.chg - a.chg; });
+  var asc = POOL.slice().sort(function(a, b){ return a.chg - b.chg; });
+  add(desc[0]); /* 이후 20거래일에 가장 크게 오른 문제 */
+  add(asc[0]);  /* 이후 20거래일에 가장 크게 떨어진 문제 */
+  var vol = POOL.map(function(q){
+    var pre = q.candles.slice(0, PRE), hi = -Infinity, lo = Infinity;
+    pre.forEach(function(c){ if (c[2] > hi) hi = c[2]; if (c[3] < lo) lo = c[3]; });
+    return { q: q, v: (hi - lo) / (q.base || 1) };
+  }).sort(function(a, b){ return b.v - a.v; });
+  if (vol.length) add(vol[0].q); /* 기준일 이전 변동 폭이 가장 컸던 문제 */
+  var rest = POOL.filter(function(q){ return used.indexOf(q) === -1; });
+  rest.sort(function(a, b){ return Math.abs(Math.abs(a.chg) - 12) - Math.abs(Math.abs(b.chg) - 12); });
+  var kr = null;
+  for (var i = 0; i < rest.length; i++){ if (rest[i].sym.indexOf(".KS") > -1){ kr = rest[i]; break; } }
+  add(kr || rest[0]); /* 중간 흐름의 한국 종목으로 마무리 */
+  return picks;
+}
+
+function buildPreviewSlides(){
+  PVQS = pickPreviewQuestions();
+  var track = $("preview-track"), dots = $("preview-dots");
+  var th = "", dh = "";
+  PVQS.forEach(function(q, i){
+    th += '<div class="preview-slide">'
+      + '<div class="pv-top"><span class="q-badge pv-badge">문제 미리보기</span>'
+      + '<span class="market-badge">' + marketLabel(q) + ' · 종목명 비공개</span></div>'
+      + '<div class="context-box"><b>당시의 상황</b> · ' + q.hint + '</div>'
+      + '<div class="chart-head"><div><div class="chart-price">' + fmtPrice(q.base, q)
+      + ' <span class="unit">' + (q.cur === "$" ? "달러" : "원") + '</span></div>'
+      + '<div class="caption">기준일 ' + q.decisionDate + ' 종가 기준 · 최근 ' + PRE + '거래일</div></div>'
+      + '<div class="legend"><span><i class="swatch" style="background:var(--up)"></i>상승 캔들</span>'
+      + '<span><i class="swatch" style="background:var(--down)"></i>하락 캔들</span>'
+      + '<span><i class="swatch" style="background:#F59E0B"></i>5일선</span>'
+      + '<span><i class="swatch" style="background:var(--faint)"></i>20일선</span></div></div>'
+      + '<div class="pv-chart"></div>'
+      + '<div class="choice-row"><div class="btn-buy"><span class="choice-col">매수<small>더 오른다에 베팅</small></span></div>'
+      + '<div class="btn-sell"><span class="choice-col">매도<small>여기서 정리한다</small></span></div></div>'
+      + '</div>';
+    dh += '<button class="preview-dot" type="button" data-pv="' + i + '" aria-label="' + (i + 1) + '번째 미리보기로 이동"></button>';
+  });
+  track.innerHTML = th;
+  dots.innerHTML = dh;
+  var dbs = dots.querySelectorAll(".preview-dot");
+  for (var j = 0; j < dbs.length; j++){
+    dbs[j].addEventListener("click", function(e){
+      e.stopPropagation();
+      pvGo(parseInt(this.getAttribute("data-pv"), 10));
+      pvStart();
+    });
+  }
+  pvBuilt = true;
+}
+
+function renderPreviewCharts(){
+  if (!$("preview-track")) return;
+  if (!pvBuilt) buildPreviewSlides();
+  var hosts = $("preview-track").querySelectorAll(".pv-chart");
+  var saved = { startIdx: state.startIdx, preShown: state.preShown, hintUsed: state.hintUsed };
+  state.startIdx = 0; state.preShown = PRE; state.hintUsed = true;
+  for (var i = 0; i < hosts.length && i < PVQS.length; i++){
+    hosts[i].innerHTML = buildChart(PVQS[i], PRE, hosts[i]);
+  }
+  state.startIdx = saved.startIdx; state.preShown = saved.preShown; state.hintUsed = saved.hintUsed;
+}
+
+function pvGo(i){
+  if (!PVQS.length) return;
+  pvIdx = ((i % PVQS.length) + PVQS.length) % PVQS.length;
+  $("preview-track").style.transform = "translateX(-" + (pvIdx * 100) + "%)";
+  var ds = $("preview-dots").querySelectorAll(".preview-dot");
+  for (var j = 0; j < ds.length; j++) ds[j].classList.toggle("on", j === pvIdx);
+}
+
+function pvStart(){
+  if (pvTimer){ clearInterval(pvTimer); pvTimer = null; }
+  if (PV_REDUCED) return;
+  pvTimer = setInterval(function(){
+    if (pvPaused || document.hidden) return;
+    if ($("screen-intro").classList.contains("hidden")) return;
+    pvGo(pvIdx + 1);
+  }, 4000);
+}
+
+(function initPreview(){
+  var pv = $("preview");
+  if (!pv) return;
+  renderPreviewCharts();
+  pvGo(0);
+  pvStart();
+  pv.addEventListener("click", function(){
+    if (Date.now() - pvSwipeAt < 400) return; /* 스와이프 직후의 클릭은 무시 */
+    trackEvent("preview_click", { slide: pvIdx + 1 });
+    startQuiz("casual");
+  });
+  $("preview-prev").addEventListener("click", function(e){ e.stopPropagation(); pvGo(pvIdx - 1); pvStart(); });
+  $("preview-next").addEventListener("click", function(e){ e.stopPropagation(); pvGo(pvIdx + 1); pvStart(); });
+  pv.addEventListener("mouseenter", function(){ pvPaused = true; });
+  pv.addEventListener("mouseleave", function(){ pvPaused = false; });
+  pv.addEventListener("focusin", function(){ pvPaused = true; });
+  pv.addEventListener("focusout", function(){ pvPaused = false; });
+  var tx = null;
+  pv.addEventListener("touchstart", function(e){ pvPaused = true; tx = e.touches[0].clientX; }, { passive: true });
+  pv.addEventListener("touchend", function(e){
+    if (tx != null && e.changedTouches.length){
+      var dx = e.changedTouches[0].clientX - tx;
+      if (Math.abs(dx) > 42){
+        pvSwipeAt = Date.now();
+        pvGo(pvIdx + (dx < 0 ? 1 : -1));
+        pvStart();
+      }
+    }
+    tx = null;
+    setTimeout(function(){ pvPaused = false; }, 1200);
+  }, { passive: true });
+  var pvResize = null;
+  window.addEventListener("resize", function(){
+    clearTimeout(pvResize);
+    pvResize = setTimeout(function(){
+      if (!$("screen-intro").classList.contains("hidden")) renderPreviewCharts();
+    }, 200);
+  });
+})();
+
 loadLeaderboard();
 </script>
 </body>
