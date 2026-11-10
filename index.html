@@ -19,7 +19,7 @@
 <meta property="og:title" content="너 인간지표야, 차트의 신이야? 차트 5개면 딱 판명난다" />
 <meta property="og:description" content="종목명 가린 진짜 차트만 보고 '지금 살까, 팔까' 골라봐. 선택하면 20거래일 뒤 실제 결과가 바로 터진다. 자신 있으면 해봐 — 틀리면 인간지표, 다 맞히면 차트의 신이다. 너는 어느 쪽일까?" />
 <meta property="og:url" content="https://buy-or-sell.netlify.app/" />
-<meta property="og:image" content="https://busstop22106.github.io/buy-or-sell/assets/og-image.png" />
+<meta property="og:image" content="https://buy-or-sell.netlify.app/assets/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content="너 인간지표야, 차트의 신이야? 차트 5개면 딱 판명나는 주식 매수·매도 퀴즈" />
@@ -1387,7 +1387,7 @@ function toast(msg){
   toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
 }
 
-var SITE_URL = "https://busstop22106.github.io/buy-or-sell/";
+var SITE_URL = "https://buy-or-sell.netlify.app/";
 
 function shareHook(){
   var total = QUIZZES.length || 1;
@@ -1464,7 +1464,7 @@ function shareKakao(){
       content: {
         title: "나 " + state.score + "/" + QUIZZES.length + "점 '" + r[0] + "' — 너는 나 이길 수 있어?",
         description: (state.quizMode === "hall" ? "힌트 1도 없이 " : "") + "종목명 가린 진짜 차트만 보고 지금 살지 팔지 고르는 3분 테스트! 고르면 20일 뒤 실제 결과가 바로 펼쳐져서 심장이 쫄깃해진다. " + shareHook(),
-        imageUrl: "https://busstop22106.github.io/buy-or-sell/assets/og-image.png",
+        imageUrl: "https://buy-or-sell.netlify.app/assets/og-image.png",
         link: {
           mobileWebUrl: rUrl,
           webUrl: rUrl
