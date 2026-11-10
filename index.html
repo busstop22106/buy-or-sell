@@ -255,6 +255,10 @@
   @media(min-width:768px){ .result-rank{font-size:48px} }
   .result-score{font-size:18px; font-weight:700; color:var(--ink)}
   .result-desc{max-width:520px; margin:12px auto 0; font-size:15px}
+  .rank-art{width:184px; height:184px; margin:18px auto 6px}
+  .rank-art svg{width:100%; height:100%; display:block; animation:rankPop .55s cubic-bezier(.16,1,.3,1)}
+  @keyframes rankPop{from{opacity:0; transform:scale(.82) translateY(10px)} to{opacity:1; transform:none}}
+  @media (max-width:640px){ .rank-art{width:160px; height:160px; margin-top:14px} }
   .review-list{display:flex; flex-direction:column; gap:0; margin-top:8px}
   .review-item{
     display:flex; gap:12px; align-items:center; padding:14px 4px; border-bottom:1px solid var(--border-soft);
@@ -287,6 +291,7 @@
   @keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
   @media (prefers-reduced-motion: reduce){
     .fade-in{animation:none}
+    .rank-art svg{animation:none}
     *{transition:none !important}
   }
 
@@ -511,7 +516,8 @@
     <div class="card result-hero fade-in" id="result-hero-card">
       <p class="mode-line" id="result-mode">실력 확인 결과 · 5문제</p>
       <p class="result-title">당신의 칭호는</p>
-      <div class="result-rank" id="result-rank">주식의 신</div>
+      <div class="rank-art" id="result-art" aria-hidden="true"></div>
+      <div class="result-rank" id="result-rank">버핏도 줄 서는 차트의 신</div>
       <div class="result-score" id="result-score">5점 / 5점</div>
       <p class="result-desc" id="result-desc"></p>
       <div class="result-actions">
@@ -563,7 +569,8 @@
   <section id="screen-rank" class="hidden">
     <div class="card result-hero fade-in">
       <p class="result-title">친구가 받은 칭호는</p>
-      <div class="result-rank" id="rank-title">주식의 신</div>
+      <div class="rank-art" id="rank-art" aria-hidden="true"></div>
+      <div class="result-rank" id="rank-title">버핏도 줄 서는 차트의 신</div>
       <div class="result-score" id="rank-score">10점 / 10점 구간</div>
       <p class="result-desc" id="rank-desc"></p>
       <div class="result-actions">
@@ -882,21 +889,34 @@ function showVerdict(pick, correct){
 
 function rankFor(score, mode){
   if (mode === "hall"){
-    if (score >= 10) return ["주식의 신", "10문제 전부, 폭등과 폭락의 갈림길을 정확히 읽었습니다. 힌트 없이 해냈다는 게 더 대단하네요."];
-    if (score >= 9) return ["월가의 전설", "한 문제 차이로 신의 영역을 놓쳤습니다. 힌트 없는 차트를 읽는 눈이 프로 수준이에요."];
-    if (score >= 8) return ["차트 마스터", "대부분의 변곡점을 잡아냈습니다. 손절과 익절의 감각이 남다르네요."];
-    if (score >= 6) return ["눈치 빠른 개미", "과반의 갈림길을 정확히 읽어냈습니다. 시장의 분위기를 읽는 눈이 제법 있네요."];
-    if (score >= 4) return ["평범한 개미", "맞힐 땐 맞히고 틀릴 땐 틀리는, 딱 보통의 투자자입니다. 매도가 어렵다는 걸 몸으로 느꼈죠?"];
-    if (score >= 2) return ["주식 초보", "아직 차트와 친해지는 중입니다. 몇 번 더 풀어보면 변곡점을 읽는 눈이 생길 거예요."];
-    return ["존버 입문자", "거의 전부 반대로 갔습니다. 역지표로 유명해질 자질이 있어요. 다음엔 반대로 눌러보세요."];
+    if (score >= 10) return ["버핏도 줄 서는 차트의 신", "10문제 전부 적중! 이 정도면 촉이 아니라 초능력입니다. 월스트리트에서 스카우트 전화가 와도 놀라지 마세요."];
+    if (score >= 9) return ["월가가 몰래 팔로우하는 개미", "딱 한 문제 차이로 신의 영역을 놓쳤습니다. 그래도 이 감각은 프로 트레이더가 몰래 훔쳐볼 수준이에요."];
+    if (score >= 8) return ["손절·익절 타이밍 귀신", "대부분의 갈림길을 정확히 짚어냈어요. 남들 공포에 떨 때 사고, 환호할 때 파는 바로 그 감각입니다."];
+    if (score >= 6) return ["눈치 하나로 연명하는 개미", "과반의 갈림길을 눈치로 읽어냈어요. 감이 올 듯 말 듯한데, 이상하게 계좌는 살아남는 타입입니다."];
+    if (score >= 4) return ["대한민국 평균 개미 대표", "맞힐 땐 맞히고 틀릴 땐 틀리는, 너무나 인간적인 성적입니다. 매도가 어렵다는 걸 몸으로 배웠죠?"];
+    if (score >= 2) return ["계좌 튼 지 3일 차 햇병아리", "아직은 차트보다 운에 기대는 단계예요. 그래도 괜찮아요. 모든 전설도 처음엔 신규 개미였습니다."];
+    return ["반대로 하면 정답인 인간 지표", "거의 다 반대로 갔어요. 오히려 재능입니다 — 다음엔 마음과 반대로 눌러보세요. 그게 바로 전략입니다."];
   }
-  if (score >= 5) return ["주식의 신", "5문제 전부, 폭등과 폭락의 갈림길을 정확히 읽었습니다. 매도 타이밍까지 완벽하네요."];
-  if (score >= 4) return ["월가의 전설", "한 문제 차이로 신의 영역을 놓쳤습니다. 차트 읽는 눈이 프로 수준이에요."];
-  if (score >= 3) return ["차트 마스터", "대부분의 변곡점을 잡아냈습니다. 손절과 익절의 감각이 남다르네요."];
-  if (score >= 2) return ["눈치 빠른 개미", "두 문제는 정확히 읽어냈습니다. 시장의 분위기를 읽는 눈이 제법 있네요."];
-  if (score >= 1) return ["평범한 개미", "맞힐 땐 맞히고 틀릴 땐 틀리는, 딱 보통의 투자자입니다. 매도가 어렵다는 걸 몸으로 느꼈죠?"];
-  return ["존버 입문자", "전부 반대로 갔습니다. 역지표로 유명해질 자질이 있어요. 다음엔 반대로 눌러보세요."];
+  if (score >= 5) return ["버핏도 줄 서는 차트의 신", "5문제 전부 적중! 이 정도면 촉이 아니라 초능력입니다. 친구들한테 자랑할 자격, 충분해요."];
+  if (score >= 4) return ["월가가 몰래 팔로우하는 개미", "딱 한 문제 차이로 신의 영역을 놓쳤어요. 그래도 이 감각은 프로가 몰래 훔쳐볼 수준입니다."];
+  if (score >= 3) return ["손절·익절 타이밍 귀신", "대부분의 갈림길을 정확히 짚어냈어요. 남들 공포에 떨 때 사고, 환호할 때 파는 바로 그 감각입니다."];
+  if (score >= 2) return ["눈치 하나로 연명하는 개미", "두 문제 적중! 감이 올 듯 말 듯한데, 이상하게 계좌는 살아남을 것 같은 타입입니다."];
+  if (score >= 1) return ["대한민국 평균 개미 대표", "맞힐 땐 맞히고 틀릴 땐 틀리는, 너무나 인간적인 성적입니다. 매도가 어렵다는 걸 몸으로 배웠죠?"];
+  return ["반대로 하면 정답인 인간 지표", "전부 반대로 갔어요. 오히려 재능입니다 — 다음엔 마음과 반대로 눌러보세요. 그게 바로 전략입니다."];
 }
+
+/* 칭호별 일러스트 — 인라인 SVG. 등급마다 개미 캐릭터의 소품·표정이 달라진다.
+   rank_key 기준이며, 결과 화면과 ?rank= 랜딩에서 공통으로 쓴다. */
+var RANK_ART = {
+  god: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="왕관과 선글라스를 쓴 개미"><circle cx="100" cy="102" r="90" fill="#F59E0B" fill-opacity="0.14"/><path d="M100 6l3.5 8.5L112 18l-8.5 3.5L100 30l-3.5-8.5L88 18l8.5-3.5z" fill="#F59E0B"/><path d="M30 84l2.6 6.4 6.4 2.6-6.4 2.6L30 102l-2.6-6.4L21 93l6.4-2.6z" fill="#FBBF24"/><path d="M168 78l2.6 6.4 6.4 2.6-6.4 2.6L168 96l-2.6-6.4L159 87l6.4-2.6z" fill="#FBBF24"/><path d="M76 128 L50 172 Q100 188 150 172 L124 128 Z" fill="#DC2626"/><ellipse cx="100" cy="140" rx="31" ry="25" fill="#57534E"/><ellipse cx="100" cy="146" rx="17" ry="14" fill="#A8A29E"/><circle cx="100" cy="90" r="27" fill="#44403C"/><polygon points="74,62 81,40 93,55 100,34 107,55 119,40 126,62" fill="#FBBF24" stroke="#F59E0B" stroke-width="2" stroke-linejoin="round"/><rect x="72" y="60" width="56" height="9" rx="4" fill="#F59E0B"/><circle cx="85" cy="64" r="2.4" fill="#DC2626"/><circle cx="100" cy="64" r="2.4" fill="#2563EB"/><circle cx="115" cy="64" r="2.4" fill="#059669"/><rect x="71" y="80" width="25" height="15" rx="7" fill="#1C1917"/><rect x="104" y="80" width="25" height="15" rx="7" fill="#1C1917"/><rect x="95" y="84" width="10" height="4" fill="#1C1917"/><path d="M91 106 Q100 112 109 106" stroke="#E7E5E4" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M148 138 h18 v7 a9 9 0 0 1 -18 0 z" fill="#FBBF24" stroke="#F59E0B" stroke-width="2"/><rect x="154" y="152" width="6" height="7" fill="#F59E0B"/><rect x="146" y="159" width="22" height="6" rx="2" fill="#F59E0B"/><path d="M148 141 q-9 -2 -7 -10" stroke="#F59E0B" stroke-width="3" fill="none"/><path d="M166 141 q9 -2 7 -10" stroke="#F59E0B" stroke-width="3" fill="none"/></svg>',
+  legend: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="실크햇과 나비넥타이를 맨 개미"><circle cx="100" cy="102" r="90" fill="#6366F1" fill-opacity="0.13"/><path d="M100 6l3.5 8.5L112 18l-8.5 3.5L100 30l-3.5-8.5L88 18l8.5-3.5z" fill="#818CF8"/><ellipse cx="100" cy="140" rx="31" ry="25" fill="#57534E"/><ellipse cx="100" cy="146" rx="17" ry="14" fill="#A8A29E"/><circle cx="100" cy="90" r="27" fill="#44403C"/><rect x="75" y="28" width="50" height="36" rx="3" fill="#1F2937"/><rect x="75" y="53" width="50" height="9" fill="#DC2626"/><rect x="63" y="62" width="74" height="8" rx="4" fill="#111827"/><circle cx="90" cy="88" r="6.5" fill="#FFFFFF"/><circle cx="110" cy="88" r="6.5" fill="#FFFFFF"/><circle cx="90" cy="89" r="3" fill="#1C1917"/><circle cx="110" cy="89" r="3" fill="#1C1917"/><path d="M92 104 Q102 109 111 101" stroke="#E7E5E4" stroke-width="3" fill="none" stroke-linecap="round"/><polygon points="100,122 86,114 86,132" fill="#DC2626"/><polygon points="100,122 114,114 114,132" fill="#DC2626"/><circle cx="100" cy="123" r="4.5" fill="#991B1B"/><path d="M122 118 L133 133 L144 118 L136 114 L133 121 L130 114 Z" fill="#2563EB"/><circle cx="133" cy="143" r="13" fill="#FBBF24" stroke="#F59E0B" stroke-width="3"/><polygon points="133,134 135.5,140 141.5,140.3 136.8,144 138.4,149.8 133,146.6 127.6,149.8 129.2,144 124.5,140.3 130.5,140" fill="#F59E0B"/></svg>',
+  master: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="머리띠를 두르고 돋보기로 차트를 보는 개미"><circle cx="100" cy="102" r="90" fill="#059669" fill-opacity="0.12"/><path d="M84 64 Q74 44 58 40" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M116 64 Q126 44 142 40" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="56" cy="39" r="5.5" fill="#3F3F46"/><circle cx="144" cy="39" r="5.5" fill="#3F3F46"/><ellipse cx="100" cy="140" rx="31" ry="25" fill="#57534E"/><ellipse cx="100" cy="146" rx="17" ry="14" fill="#A8A29E"/><circle cx="100" cy="90" r="27" fill="#44403C"/><rect x="72" y="66" width="56" height="12" rx="6" fill="#0D9488"/><path d="M127 68 L143 60 L141 74 L128 76 Z" fill="#0F766E"/><path d="M80 84 L95 84" stroke="#E7E5E4" stroke-width="3" stroke-linecap="round"/><circle cx="90" cy="92" r="3.2" fill="#FFFFFF"/><path d="M105 84 L120 84" stroke="#E7E5E4" stroke-width="3" stroke-linecap="round"/><circle cx="110" cy="92" r="3.2" fill="#FFFFFF"/><path d="M93 106 Q100 110 107 106" stroke="#E7E5E4" stroke-width="3" fill="none" stroke-linecap="round"/><line x1="159" y1="133" x2="177" y2="151" stroke="#334155" stroke-width="8" stroke-linecap="round"/><circle cx="143" cy="117" r="22" fill="#FFFFFF" fill-opacity="0.35" stroke="#334155" stroke-width="5"/><polyline points="128,126 138,112 146,120 157,106" fill="none" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  sharp: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="레이더와 번개 배지를 단 눈치 빠른 개미"><circle cx="100" cy="102" r="90" fill="#0EA5E9" fill-opacity="0.12"/><path d="M150 26 a18 18 0 0 1 10 14" stroke="#0EA5E9" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M156 16 a30 30 0 0 1 18 24" stroke="#0EA5E9" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M84 64 Q74 44 58 40" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M116 64 Q126 44 142 40" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="56" cy="39" r="5.5" fill="#3F3F46"/><circle cx="144" cy="39" r="6.5" fill="#0EA5E9"/><path d="M22 74 h16 M18 96 h14 M24 118 h15" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/><ellipse cx="100" cy="140" rx="31" ry="25" fill="#57534E"/><ellipse cx="100" cy="146" rx="17" ry="14" fill="#A8A29E"/><circle cx="100" cy="90" r="27" fill="#44403C"/><circle cx="89" cy="88" r="6.5" fill="#FFFFFF"/><circle cx="89" cy="89" r="3" fill="#1C1917"/><path d="M103 88 Q110 94 117 88" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90 102 Q100 112 110 102 Q100 106 90 102 Z" fill="#FFFFFF"/><polygon points="52,124 40,146 49,146 42,166 62,140 52,140 60,124" fill="#FACC15" stroke="#EAB308" stroke-width="2" stroke-linejoin="round"/><path d="M140 148 q14 4 24 -4" stroke="#38BDF8" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+  ordinary: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="넥타이와 서류가방을 든 평범한 개미"><circle cx="100" cy="102" r="90" fill="#64748B" fill-opacity="0.12"/><polyline points="18,52 52,52 64,44 96,44" fill="none" stroke="#CBD5E1" stroke-width="3" stroke-dasharray="6 6"/><path d="M84 64 Q76 50 64 50" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M116 64 Q124 50 136 50" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="62" cy="50" r="5" fill="#3F3F46"/><circle cx="138" cy="50" r="5" fill="#3F3F46"/><ellipse cx="100" cy="140" rx="31" ry="25" fill="#57534E"/><ellipse cx="100" cy="146" rx="17" ry="14" fill="#A8A29E"/><circle cx="100" cy="90" r="27" fill="#44403C"/><circle cx="90" cy="88" r="3" fill="#FFFFFF"/><circle cx="110" cy="88" r="3" fill="#FFFFFF"/><path d="M92 103 L108 103" stroke="#E7E5E4" stroke-width="3" stroke-linecap="round"/><polygon points="100,118 93,126 100,156 107,126" fill="#2563EB"/><rect x="94" y="112" width="12" height="9" rx="2" fill="#1D4ED8"/><path d="M140 148 v-4 a7 7 0 0 1 14 0 v4" stroke="#78350F" stroke-width="4" fill="none"/><rect x="126" y="148" width="42" height="28" rx="4" fill="#92400E"/><rect x="126" y="159" width="42" height="4" fill="#78350F"/><rect x="32" y="142" width="19" height="23" rx="3" fill="#FFFFFF" stroke="#94A3B8" stroke-width="2.5"/><path d="M51 148 q9 4 0 11" stroke="#94A3B8" stroke-width="2.5" fill="none"/><path d="M38 134 q3 -5 0 -10 M46 134 q3 -5 0 -10" stroke="#CBD5E1" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+  beginner: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="새싹을 달고 알에서 깨어난 아기 개미"><circle cx="100" cy="102" r="90" fill="#EC4899" fill-opacity="0.10"/><path d="M100 60 Q100 48 103 40" stroke="#16A34A" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="90" cy="38" rx="11" ry="6" fill="#22C55E" transform="rotate(-28 90 38)"/><ellipse cx="112" cy="34" rx="11" ry="6" fill="#4ADE80" transform="rotate(24 112 34)"/><path d="M84 66 Q76 52 66 50" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M116 66 Q124 52 134 50" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="64" cy="50" r="5" fill="#3F3F46"/><circle cx="136" cy="50" r="5" fill="#3F3F46"/><ellipse cx="100" cy="140" rx="31" ry="25" fill="#57534E"/><circle cx="100" cy="92" r="27" fill="#44403C"/><circle cx="89" cy="90" r="7" fill="#FFFFFF"/><circle cx="111" cy="90" r="7" fill="#FFFFFF"/><circle cx="89" cy="91" r="3.6" fill="#1C1917"/><circle cx="111" cy="91" r="3.6" fill="#1C1917"/><circle cx="91.5" cy="88" r="1.3" fill="#FFFFFF"/><circle cx="113.5" cy="88" r="1.3" fill="#FFFFFF"/><circle cx="100" cy="106" r="3.6" fill="none" stroke="#E7E5E4" stroke-width="2.6"/><path d="M60 148 a40 27 0 0 0 80 0 l-9 -11 l-10 9 l-10 -10 l-11 10 l-11 -10 l-10 9 l-9 -11 z" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="2.5" stroke-linejoin="round"/><circle cx="162" cy="50" r="16" fill="#FFFFFF" stroke="#F9A8D4" stroke-width="2.5"/><text x="162" y="58" text-anchor="middle" font-size="22" font-weight="800" fill="#EC4899" font-family="inherit">?</text><path d="M150 60 L142 72 L156 66 Z" fill="#FFFFFF" stroke="#F9A8D4" stroke-width="2"/></svg>',
+  hodl: '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="거북이 등껍질을 쓰고 하락 차트를 버티는 개미"><circle cx="100" cy="102" r="90" fill="#2563EB" fill-opacity="0.10"/><polyline points="16,40 62,68 94,56 138,98 178,124" fill="none" stroke="#DC2626" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><polygon points="178,124 162,122 172,110" fill="#DC2626"/><path d="M84 64 Q76 50 64 50" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M116 64 Q124 50 136 50" stroke="#3F3F46" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="62" cy="50" r="5" fill="#3F3F46"/><circle cx="138" cy="50" r="5" fill="#3F3F46"/><path d="M62 146 a38 32 0 0 1 76 0 z" fill="#16A34A"/><path d="M81 122 a38 32 0 0 1 38 0 M72 134 a38 32 0 0 1 56 0" stroke="#15803D" stroke-width="2.5" fill="none"/><rect x="58" y="144" width="84" height="8" rx="4" fill="#15803D"/><circle cx="100" cy="90" r="27" fill="#44403C"/><g transform="rotate(-18 120 70)"><rect x="106" y="65" width="28" height="10" rx="5" fill="#FDE68A" stroke="#F59E0B" stroke-width="1.6"/><rect x="116" y="67.5" width="8" height="5" fill="#F59E0B" opacity="0.5"/></g><path d="M82 88 l10 8 M92 88 l-10 8" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><path d="M108 88 l10 8 M118 88 l-10 8" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><path d="M89 108 q5.5 -4 11 0 q5.5 4 11 0" stroke="#E7E5E4" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M52 74 q-6 10 0 14 q6 -4 0 -14" fill="#38BDF8"/><path d="M152 62 q-6 10 0 14 q6 -4 0 -14" fill="#38BDF8"/></svg>'
+};
+function rankArtSVG(key){ return RANK_ART[key] || ""; }
 
 /* 칭호 메타데이터 — 실력 확인(5점)은 RANKS_CASUAL, 명예의 전당(10점)은 RANKS_HALL.
    ?rank=<key> 공유 딥링크·리더보드·칭호별 랜딩 화면은 명예의 전당(RANKS_HALL) 기준이다.
@@ -1282,6 +1302,8 @@ function showResult(){
     mode: state.quizMode
   });
   $("result-mode").textContent = hall ? "명예의 전당 결과 · 10문제 · 힌트 없음" : "실력 확인 결과 · 5문제";
+  var resultMeta = rankMetaFor(state.score, state.quizMode);
+  $("result-art").innerHTML = resultMeta ? rankArtSVG(resultMeta.key) : "";
   $("result-rank").textContent = r[0];
   $("result-score").textContent = state.score + "점 / " + QUIZZES.length + "점";
   $("result-desc").textContent = r[1];
@@ -1334,6 +1356,7 @@ function showResult(){
 
 /* ---------------- Rank landing (?rank=<key>) ---------------- */
 function showRankLanding(meta){
+  $("rank-art").innerHTML = rankArtSVG(meta.key);
   $("rank-title").textContent = meta.title;
   $("rank-score").textContent = meta.range + " / 10점 구간";
   $("rank-desc").textContent = meta.desc;
@@ -1366,7 +1389,7 @@ var SITE_URL = "https://busstop22106.github.io/buy-or-sell/";
 
 function shareText(){
   var r = rankFor(state.score, state.quizMode);
-  return "나 " + state.score + "/" + QUIZZES.length + "점, 칭호는 '" + r[0] + "'! 종목명을 가린 실제 과거 차트만 보고 매수·매도를 골랐어요. 너는 몇 점? 도전해봐 👉";
+  return "주식 퀴즈에서 나 " + state.score + "/" + QUIZZES.length + "점, 칭호는 무려 '" + r[0] + "'! 😂 종목명을 가린 실제 과거 차트만 보고 매수·매도를 맞혔어. 너는 과연 어떤 칭호를 받을까? 도전해봐 👉";
 }
 
 function shareResult(){
@@ -1398,7 +1421,7 @@ function shareKakao(){
       objectType: "feed",
       content: {
         title: "나 " + state.score + "/" + QUIZZES.length + "점, 칭호는 '" + r[0] + "'!",
-        description: "종목명을 가린 실제 과거 차트만 보고 매수·매도를 골랐어요. 너는 몇 점? 도전해봐",
+        description: "종목명을 가린 실제 과거 차트만 보고 매수·매도를 맞히는 퀴즈. 과연 너는 어떤 칭호를 받을까?",
         imageUrl: "https://busstop22106.github.io/buy-or-sell/assets/og-image.png",
         link: {
           mobileWebUrl: rUrl,
