@@ -265,6 +265,20 @@
   .hall-cta p{font-size:13px; color:var(--muted); margin:6px 0 12px}
   .mode-line{font-size:13px; font-weight:700; color:var(--primary); margin:0 0 8px}
   #btn-start{height:56px; font-size:17px; padding:0 32px}
+  .result-lb{margin-top:24px; padding-top:20px; border-top:1px solid var(--border-soft); text-align:left}
+  .result-lb h3{font-size:16px; font-weight:700; color:var(--ink); margin:0}
+  .result-lb p.desc{font-size:13px; color:var(--muted); margin:6px 0 0}
+  .result-lb-toggle-row{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
+  .result-lb-panel{margin-top:8px}
+  .result-lb-panel .lb-head{margin-top:8px}
+  .result-home-inside{margin-top:24px; padding-top:20px; border-top:1px solid var(--border-soft); display:flex; justify-content:center}
+  .result-home-row{margin-top:16px; display:flex; justify-content:center}
+  .result-home-row .btn,.result-home-inside .btn{min-width:200px}
+  @media (max-width:640px){
+    .result-lb-toggle-row .btn{width:100%; height:52px; font-size:16px}
+    .result-home-row .btn,.result-home-inside .btn{width:100%; height:52px; font-size:16px}
+    .result-lb-panel .lb-refresh{height:36px; width:auto}
+  }
 
   /* ---------- Mobile (phones) ---------- */
   button{touch-action:manipulation}
@@ -438,11 +452,34 @@
         <p>힌트 없이 10문제를 풀면 닉네임으로 리더보드에 등록할 수 있어요. 실력 확인보다 한 단계 어려운 진짜 승부입니다.</p>
         <button class="btn btn-primary" id="btn-hall-start" type="button">명예의 전당 도전하기 · 10문제</button>
       </div>
+      <div class="result-lb" id="result-lb-box">
+        <h3>명예의 전당 리더보드</h3>
+        <p class="desc">명예의 전당 상위 10명을 바로 확인할 수 있어요. 내 기록은 ‘나’ 배지로 표시됩니다.</p>
+        <div class="result-lb-toggle-row">
+          <button class="btn btn-ghost" id="btn-result-lb-toggle" type="button" aria-expanded="false" aria-controls="result-lb-panel">리더보드 보기</button>
+        </div>
+        <div class="result-lb-panel hidden" id="result-lb-panel">
+          <div class="lb-head">
+            <span class="small" style="font-weight:700;color:var(--ink)">상위 10명</span>
+            <button class="btn btn-ghost lb-refresh" id="btn-result-lb-refresh" type="button">새로고침</button>
+          </div>
+          <p class="lb-sub">점수가 같으면 힌트를 적게 쓴 순서, 그다음 먼저 등록한 순서입니다.</p>
+          <div class="lb-status" id="result-lb-status">순위를 불러오는 중입니다.</div>
+          <div class="lb-list hidden" id="result-lb-list"></div>
+          <p class="lb-my-note hidden" id="result-lb-my-note"></p>
+        </div>
+      </div>
+      <div class="result-home-inside">
+        <button class="btn btn-ghost btn-go-home" id="btn-result-home" type="button">첫 화면으로</button>
+      </div>
     </div>
     <div class="card" style="margin-top:16px">
       <h2>문제별 복기</h2>
       <div class="review-list" id="review-list"></div>
       <p class="caption" style="margin-top:16px">수익률은 각 문제의 기준일 종가 대비 20거래일 뒤 종가 기준이며, 데이터 출처는 Yahoo Finance 일봉입니다. 실제 투자는 차트 하나만으로 판단할 수 없습니다.</p>
+    </div>
+    <div class="result-home-row">
+      <button class="btn btn-ghost btn-go-home" type="button">첫 화면으로</button>
     </div>
   </section>
 
@@ -935,6 +972,88 @@ function loadLeaderboard(){
       status.textContent = "지금은 순위를 불러올 수 없어요. 잠시 후 새로고침을 눌러주세요.";
     });
 }
+/* ---- 결과 화면 리더보드 (홈 리더보드와 같은 데이터·정렬) ---- */
+var resultLbOpen = false;
+var resultLbLoaded = false;
+function setResultLbOpen(open){
+  resultLbOpen = !!open;
+  var panel = $("result-lb-panel"), btn = $("btn-result-lb-toggle");
+  if (!panel || !btn) return;
+  panel.classList.toggle("hidden", !resultLbOpen);
+  btn.setAttribute("aria-expanded", resultLbOpen ? "true" : "false");
+  btn.textContent = resultLbOpen ? "리더보드 접기" : "리더보드 보기";
+  if (resultLbOpen && !resultLbLoaded) loadResultLeaderboard();
+}
+function renderResultLeaderboard(rows){
+  var status = $("result-lb-status"), list = $("result-lb-list"), note = $("result-lb-my-note");
+  if (!status || !list || !note) return;
+  var my = lbLoadMy();
+  var myIds = {};
+  my.ids.forEach(function(id){ myIds[id] = true; });
+  if (!rows.length){
+    list.classList.add("hidden");
+    note.classList.add("hidden");
+    status.classList.remove("hidden");
+    status.textContent = "아직 등록된 기록이 없어요. 명예의 전당에 도전해 첫 기록을 남겨보세요.";
+    return;
+  }
+  var html = "";
+  var bestMine = 0;
+  var bestMineHints = 0;
+  rows.forEach(function(row, i){
+    var meta = rankMetaByKey(row.rank_key, "hall");
+    var title = meta ? meta.title : (row.rank_key || "");
+    var mine = !!myIds[row.id];
+    if (mine && !bestMine){ bestMine = i + 1; bestMineHints = lbHints(row); }
+    html += '<div class="lb-row' + (mine ? " mine" : "") + '">';
+    html += '<span class="lb-pos' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>";
+    html += '<div class="lb-main"><div class="lb-name">' + lbEscape(row.nickname) + (mine ? '<span class="lb-me">나</span>' : "") + '</div><div class="lb-meta">' + lbEscape(title) + " · " + lbDate(row.created_at) + "</div></div>";
+    html += '<span class="lb-score">' + row.score + '점<span class="lb-hints">' + lbHintText(lbHints(row)) + "</span></span>";
+    html += "</div>";
+  });
+  status.classList.add("hidden");
+  list.classList.remove("hidden");
+  list.innerHTML = html;
+  if (bestMine){
+    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (" + lbHintText(bestMineHints) + ")";
+    note.classList.remove("hidden");
+  } else if (my.last){
+    var lm = rankMetaByKey(my.last.rank_key, "hall");
+    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", " + lbHintText(lbHints(my.last)) + ") · 아직 상위 10위에는 없어요.";
+    note.classList.remove("hidden");
+  } else {
+    note.classList.add("hidden");
+  }
+}
+function loadResultLeaderboard(){
+  var status = $("result-lb-status"), list = $("result-lb-list");
+  if (!status || !list) return;
+  status.classList.remove("hidden");
+  status.textContent = "순위를 불러오는 중입니다.";
+  list.classList.add("hidden");
+  lbFetch("leaderboard?select=id,nickname,score,rank_key,hints_used,created_at&order=score.desc,hints_used.asc,created_at.asc&limit=10")
+    .then(function(res){ return res.json(); })
+    .then(function(rows){
+      resultLbLoaded = true;
+      renderResultLeaderboard(rows || []);
+      trackEvent("leaderboard_view", { entry_count: (rows || []).length, from: "result" });
+    })
+    .catch(function(){
+      list.classList.add("hidden");
+      var note = $("result-lb-my-note"); if (note) note.classList.add("hidden");
+      status.classList.remove("hidden");
+      status.textContent = "지금은 순위를 불러올 수 없어요. 잠시 후 새로고침을 눌러주세요.";
+    });
+}
+function goHomeFromResult(){
+  if (state && state.timer){ try { clearTimeout(state.timer); } catch (e) {} }
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false, quizMode: "casual" };
+  resultLbLoaded = false;
+  setResultLbOpen(false);
+  showScreen("intro");
+  loadLeaderboard();
+  trackEvent("result_go_home", {});
+}
 function lbCount(query){
   return lbFetch("leaderboard?select=id&limit=1&" + query, { headers: { "Prefer": "count=exact" } })
     .then(function(res){
@@ -1001,17 +1120,23 @@ function submitLeaderboard(){
     if (row){
       lbMyRank(row).then(function(rank){
         st.className = "lb-submit-status ok";
-        st.textContent = "리더보드에 등록됐어요. 현재 " + rank + "위입니다.";
+        st.textContent = "리더보드에 등록됐어요. 현재 " + rank + "위입니다. 아래 ‘리더보드 보기’에서 순위를 확인하세요.";
         loadLeaderboard();
+        resultLbLoaded = false;
+        setResultLbOpen(true);
       }).catch(function(){
         st.className = "lb-submit-status ok";
-        st.textContent = "리더보드에 등록됐어요.";
+        st.textContent = "리더보드에 등록됐어요. 아래 ‘리더보드 보기’에서 순위를 확인하세요.";
         loadLeaderboard();
+        resultLbLoaded = false;
+        setResultLbOpen(true);
       });
     } else {
       st.className = "lb-submit-status ok";
-      st.textContent = "리더보드에 등록됐어요.";
+      st.textContent = "리더보드에 등록됐어요. 아래 ‘리더보드 보기’에서 순위를 확인하세요.";
       loadLeaderboard();
+      resultLbLoaded = false;
+      setResultLbOpen(true);
     }
   }).catch(function(){
     btn.disabled = false;
@@ -1039,6 +1164,8 @@ function showResult(){
   $("share-preview").textContent = "공유 문구: \"" + shareText() + "\"";
   $("lb-submit-box").classList.toggle("hidden", !hall);
   $("hall-cta-box").classList.toggle("hidden", hall);
+  resultLbLoaded = false;
+  setResultLbOpen(false);
   if (hall) lbResetSubmit();
   $("btn-kakao").classList.toggle("hidden", !kakaoReady());
   var html = "";
@@ -1185,6 +1312,14 @@ $("lb-nickname").addEventListener("keydown", function(e){
   if (e.key === "Enter"){ e.preventDefault(); submitLeaderboard(); }
 });
 $("btn-lb-refresh").addEventListener("click", loadLeaderboard);
+$("btn-result-lb-toggle").addEventListener("click", function(){ setResultLbOpen(!resultLbOpen); });
+$("btn-result-lb-refresh").addEventListener("click", function(){ resultLbLoaded = false; loadResultLeaderboard(); });
+(function(){
+  var homes = document.querySelectorAll(".btn-go-home");
+  for (var i = 0; i < homes.length; i++) homes[i].addEventListener("click", goHomeFromResult);
+  var rh = $("btn-result-home");
+  if (rh && !rh.classList.contains("btn-go-home")) rh.addEventListener("click", goHomeFromResult);
+})();
 loadLeaderboard();
 </script>
 </body>
