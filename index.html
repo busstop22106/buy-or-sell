@@ -177,6 +177,30 @@
   }
   .score-chip{font-size:14px; font-weight:600; color:var(--ink)}
   .score-chip b{color:var(--primary)}
+  .btn-quit{
+    width:36px; height:36px; padding:0; border-radius:999px; flex:none;
+    background:transparent; border:1px solid var(--border); color:var(--ink);
+    font-size:17px; font-weight:700; display:inline-flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn-quit:active{transform:scale(.96)}
+
+  /* ---------- Quit-confirm modal ---------- */
+  .quit-overlay{
+    position:fixed; inset:0; z-index:80; padding:20px;
+    background:rgba(2,6,23,.55); display:flex; align-items:center; justify-content:center;
+  }
+  .quit-dialog{
+    background:var(--card); color:var(--body); border:1px solid var(--border); border-radius:16px;
+    box-shadow:0 20px 50px rgba(2,6,23,.35); padding:24px 22px; width:100%; max-width:360px;
+  }
+  .quit-dialog h2{font-size:19px; margin-bottom:8px}
+  .quit-dialog p{font-size:14.5px; margin:0; line-height:1.6}
+  .quit-dialog p b{color:var(--bad)}
+  .quit-actions{display:flex; gap:10px; margin-top:22px}
+  .quit-actions .btn{flex:1; height:50px; padding:0 10px}
+  .btn-danger{background:var(--bad); color:#fff}
+  .btn-danger:hover{transform:translateY(-1px)}
   .progress{height:8px; background:var(--track); border-radius:999px; overflow:hidden; margin-bottom:16px}
   .progress > div{height:100%; background:var(--primary); border-radius:999px; transition:width .5s cubic-bezier(.16,1,.3,1)}
   .dots{display:flex; gap:6px; flex-wrap:wrap}
@@ -449,6 +473,7 @@
   <section id="screen-quiz" class="hidden">
     <div class="hud">
       <div class="hud-left">
+        <button class="btn-quit" id="btn-quiz-back" type="button" aria-label="뒤로가기 — 퀴즈를 그만두고 첫 화면으로 이동">←</button>
         <span class="q-badge" id="hud-q">문제 1 / 5</span>
         <span class="market-badge" id="hud-mode">실력 확인</span>
         <span class="market-badge" id="hud-market">미국 대형주</span>
@@ -554,6 +579,18 @@
     </div>
   </section>
 
+</div>
+
+<!-- ============ QUIT CONFIRM MODAL ============ -->
+<div class="quit-overlay hidden" id="quit-modal">
+  <div class="quit-dialog" role="alertdialog" aria-modal="true" aria-labelledby="quit-title" aria-describedby="quit-desc">
+    <h2 id="quit-title">퀴즈를 그만둘까요?</h2>
+    <p id="quit-desc"><b>진행상황이 모두 사라집니다.</b> 첫 화면으로 이동하시겠어요?</p>
+    <div class="quit-actions">
+      <button class="btn btn-ghost" id="btn-quit-stay" type="button">계속 풀기</button>
+      <button class="btn btn-danger" id="btn-quit-leave" type="button">첫 화면으로 이동</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
@@ -736,6 +773,7 @@ function startQuiz(mode){
   state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: !hall, quizMode: hall ? "hall" : "casual" };
   trackEvent("quiz_start", { question_count: QUIZZES.length, mode: state.quizMode });
   showScreen("quiz");
+  armBackGuard();
   loadQuestion();
 }
 
@@ -1089,6 +1127,49 @@ function loadResultLeaderboard(){
       status.textContent = "지금은 순위를 불러올 수 없어요. 잠시 후 새로고침을 눌러주세요.";
     });
 }
+/* ---------------- 퀴즈 중단(뒤로가기) 확인 ----------------
+   퀴즈 화면에서는 화면 속 '나가기' 버튼과 기기·브라우저 뒤로가기 모두
+   바로 홈으로 보내지 않고, 진행 상황이 사라진다는 경고 팝업을 먼저 띄운다.
+   뒤로가기는 history 가드 항목을 쌓아 popstate로 가로챈다. */
+var quitModalOpen = false;
+var backGuardArmed = false;
+function quizVisible(){ return !$("screen-quiz").classList.contains("hidden"); }
+function armBackGuard(){
+  if (backGuardArmed) return;
+  try { window.history.pushState({ quizGuard: true }, ""); backGuardArmed = true; } catch (e) {}
+}
+function openQuitModal(){
+  if (quitModalOpen || !quizVisible()) return;
+  quitModalOpen = true;
+  $("quit-modal").classList.remove("hidden");
+  var stay = $("btn-quit-stay");
+  if (stay) stay.focus();
+  trackEvent("quiz_quit_prompt", { question_number: state ? state.idx + 1 : 0, mode: state ? state.quizMode : "" });
+}
+function closeQuitModal(){
+  quitModalOpen = false;
+  $("quit-modal").classList.add("hidden");
+}
+function exitQuizToHome(){
+  var atQuestion = state ? state.idx + 1 : 0;
+  var mode = state ? state.quizMode : "casual";
+  closeQuitModal();
+  if (state && state.timer){ try { clearTimeout(state.timer); } catch (e) {} }
+  state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false, quizMode: "casual" };
+  resultLbLoaded = false;
+  showScreen("intro");
+  loadLeaderboard();
+  trackEvent("quiz_quit_to_home", { question_number: atQuestion, mode: mode });
+}
+window.addEventListener("popstate", function(){
+  backGuardArmed = false;
+  if (quizVisible()){
+    /* 뒤로가기를 소모했으니 가드를 다시 쌓고 경고 팝업만 띄운다 */
+    armBackGuard();
+    openQuitModal();
+  }
+});
+
 function goHomeFromResult(){
   if (state && state.timer){ try { clearTimeout(state.timer); } catch (e) {} }
   state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false, quizMode: "casual" };
@@ -1372,6 +1453,13 @@ $("btn-rank-home").addEventListener("click", function(){ showScreen("intro"); })
     }
   } catch (e) {}
 })();
+$("btn-quiz-back").addEventListener("click", openQuitModal);
+$("btn-quit-stay").addEventListener("click", closeQuitModal);
+$("btn-quit-leave").addEventListener("click", exitQuizToHome);
+$("quit-modal").addEventListener("click", function(e){ if (e.target === this) closeQuitModal(); });
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape" && quitModalOpen) closeQuitModal();
+});
 $("btn-buy").addEventListener("click", function(){ choose("buy"); });
 $("btn-sell").addEventListener("click", function(){ choose("sell"); });
 $("btn-restart").addEventListener("click", function(){ startQuiz(state.quizMode || "casual"); });
