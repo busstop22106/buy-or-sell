@@ -107,11 +107,16 @@
   .preview{
     margin:20px auto 0; max-width:660px; background:var(--bg);
     border:1px solid var(--border); border-radius:14px; padding:14px;
-    cursor:pointer; -webkit-tap-highlight-color:transparent;
+    -webkit-tap-highlight-color:transparent;
   }
-  .preview-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px}
-  .preview-title{font-size:13px; font-weight:700; color:var(--ink)}
-  .preview-cta{font-size:12px; font-weight:600; color:var(--primary)}
+  .preview-head{display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:10px}
+  .preview-cta{
+    font-size:12px; font-weight:600; color:var(--primary);
+    background:transparent; border:none; padding:2px 0; cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .preview-cta:hover{text-decoration:underline}
+  .preview-cta:active{transform:scale(.97)}
   .preview-viewport{overflow:hidden}
   .preview-track{display:flex; transition:transform .55s cubic-bezier(.16,1,.3,1)}
   .preview-slide{flex:0 0 100%; min-width:0}
@@ -423,10 +428,9 @@
     <div class="card intro-hero fade-in">
       <h1>매수는 쉬운데,<br />매도는 진짜 어렵죠.</h1>
       <p class="lede">실제로 있었던 과거 주가 차트를 보여드립니다. 종목명은 가려져 있어요. 차트만 보고 <b>지금이 살 때인지, 팔 때인지</b> 골라보세요. 선택하면 그 뒤 20거래일의 실제 차트가 펼쳐지고, 어떤 선택이 옳았는지 알려드립니다.</p>
-      <div class="preview" id="preview" role="group" aria-label="실제 게임 화면 미리보기 — 누르면 퀴즈가 시작됩니다">
+      <div class="preview" id="preview" role="group" aria-label="게임 화면 미리보기">
         <div class="preview-head">
-          <span class="preview-title">실제 게임 화면 미리보기</span>
-          <span class="preview-cta">눌러서 바로 시작하기</span>
+          <button class="preview-cta" id="preview-start" type="button">눌러서 바로 시작하기</button>
         </div>
         <div class="preview-viewport">
           <div class="preview-track" id="preview-track"></div>
@@ -1604,7 +1608,7 @@ function pvStart(){
   renderPreviewCharts();
   pvGo(0);
   pvStart();
-  pv.addEventListener("click", function(){
+  $("preview-start").addEventListener("click", function(){
     if (Date.now() - pvSwipeAt < 400) return; /* 스와이프 직후의 클릭은 무시 */
     trackEvent("preview_click", { slide: pvIdx + 1 });
     startQuiz("casual");
