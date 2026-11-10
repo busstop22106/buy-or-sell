@@ -89,9 +89,9 @@
   .intro-hero p.lede{font-size:16px; margin:12px 0 0; max-width:640px}
   .how-wrap{
     margin-top:16px; background:var(--chip); border:1px solid var(--border-soft); border-radius:12px;
-    padding:6px 16px;
+    padding:2px 16px;
   }
-  .how-item{display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--border-soft)}
+  .how-item{display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--border-soft)}
   .how-item:last-child{border-bottom:none}
   .how-num{
     width:20px; height:20px; flex:none; border-radius:999px; background:var(--muted); color:var(--bg);
@@ -268,15 +268,12 @@
   .result-lb{margin-top:24px; padding-top:20px; border-top:1px solid var(--border-soft); text-align:left}
   .result-lb h3{font-size:16px; font-weight:700; color:var(--ink); margin:0}
   .result-lb p.desc{font-size:13px; color:var(--muted); margin:6px 0 0}
-  .result-lb-toggle-row{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
-  .result-lb-panel{margin-top:8px}
-  .result-lb-panel .lb-head{margin-top:8px}
-  .result-home-inside{margin-top:24px; padding-top:20px; border-top:1px solid var(--border-soft); display:flex; justify-content:center}
-  .result-home-row{margin-top:16px; display:flex; justify-content:center}
-  .result-home-row .btn,.result-home-inside .btn{min-width:200px}
+  .result-lb-panel{margin-top:10px}
+  .result-lb-panel .lb-head{margin-top:0}
+  .result-home-inside{margin-top:16px; padding-top:16px; border-top:1px solid var(--border-soft); display:flex; justify-content:center}
+  .result-home-inside .btn{min-width:200px}
   @media (max-width:640px){
-    .result-lb-toggle-row .btn{width:100%; height:52px; font-size:16px}
-    .result-home-row .btn,.result-home-inside .btn{width:100%; height:52px; font-size:16px}
+    .result-home-inside .btn{width:100%; height:52px; font-size:16px}
     .result-lb-panel .lb-refresh{height:36px; width:auto}
   }
 
@@ -288,8 +285,8 @@
     h1{font-size:27px; line-height:1.3}
     h2{font-size:19px}
     .intro-hero p.lede{font-size:15px; margin-top:10px}
-    .how-wrap{margin-top:12px; padding:4px 14px}
-    .how-item{padding:8px 0; gap:9px}
+    .how-wrap{margin-top:12px; padding:2px 14px}
+    .how-item{padding:6px 0; gap:9px}
     .how-item h3,.how-item p{font-size:13px}
     .start-row{margin-top:20px; flex-direction:column; align-items:stretch; gap:10px}
     .start-row .btn{width:100%; height:54px; font-size:16px}
@@ -455,10 +452,7 @@
       <div class="result-lb" id="result-lb-box">
         <h3>명예의 전당 리더보드</h3>
         <p class="desc">명예의 전당 상위 10명을 바로 확인할 수 있어요. 내 기록은 ‘나’ 배지로 표시됩니다.</p>
-        <div class="result-lb-toggle-row">
-          <button class="btn btn-ghost" id="btn-result-lb-toggle" type="button" aria-expanded="false" aria-controls="result-lb-panel">리더보드 보기</button>
-        </div>
-        <div class="result-lb-panel hidden" id="result-lb-panel">
+        <div class="result-lb-panel" id="result-lb-panel">
           <div class="lb-head">
             <span class="small" style="font-weight:700;color:var(--ink)">상위 10명</span>
             <button class="btn btn-ghost lb-refresh" id="btn-result-lb-refresh" type="button">새로고침</button>
@@ -477,9 +471,6 @@
       <h2>문제별 복기</h2>
       <div class="review-list" id="review-list"></div>
       <p class="caption" style="margin-top:16px">수익률은 각 문제의 기준일 종가 대비 20거래일 뒤 종가 기준이며, 데이터 출처는 Yahoo Finance 일봉입니다. 실제 투자는 차트 하나만으로 판단할 수 없습니다.</p>
-    </div>
-    <div class="result-home-row">
-      <button class="btn btn-ghost btn-go-home" type="button">첫 화면으로</button>
     </div>
   </section>
 
@@ -972,18 +963,8 @@ function loadLeaderboard(){
       status.textContent = "지금은 순위를 불러올 수 없어요. 잠시 후 새로고침을 눌러주세요.";
     });
 }
-/* ---- 결과 화면 리더보드 (홈 리더보드와 같은 데이터·정렬) ---- */
-var resultLbOpen = false;
+/* ---- 결과 화면 리더보드 (홈 리더보드와 같은 데이터·정렬, 항상 표시) ---- */
 var resultLbLoaded = false;
-function setResultLbOpen(open){
-  resultLbOpen = !!open;
-  var panel = $("result-lb-panel"), btn = $("btn-result-lb-toggle");
-  if (!panel || !btn) return;
-  panel.classList.toggle("hidden", !resultLbOpen);
-  btn.setAttribute("aria-expanded", resultLbOpen ? "true" : "false");
-  btn.textContent = resultLbOpen ? "리더보드 접기" : "리더보드 보기";
-  if (resultLbOpen && !resultLbLoaded) loadResultLeaderboard();
-}
 function renderResultLeaderboard(rows){
   var status = $("result-lb-status"), list = $("result-lb-list"), note = $("result-lb-my-note");
   if (!status || !list || !note) return;
@@ -1049,7 +1030,6 @@ function goHomeFromResult(){
   if (state && state.timer){ try { clearTimeout(state.timer); } catch (e) {} }
   state = { idx: 0, score: 0, answers: [], revealed: false, timer: null, visible: PRE, mode: "full", preShown: PRE, startIdx: 0, hintsLeft: 0, hintUsed: false, quizMode: "casual" };
   resultLbLoaded = false;
-  setResultLbOpen(false);
   showScreen("intro");
   loadLeaderboard();
   trackEvent("result_go_home", {});
@@ -1120,23 +1100,23 @@ function submitLeaderboard(){
     if (row){
       lbMyRank(row).then(function(rank){
         st.className = "lb-submit-status ok";
-        st.textContent = "리더보드에 등록됐어요. 현재 " + rank + "위입니다. 아래 ‘리더보드 보기’에서 순위를 확인하세요.";
+        st.textContent = "리더보드에 등록됐어요. 현재 " + rank + "위입니다. 아래 리더보드에서 순위를 확인하세요.";
         loadLeaderboard();
         resultLbLoaded = false;
-        setResultLbOpen(true);
+        loadResultLeaderboard();
       }).catch(function(){
         st.className = "lb-submit-status ok";
-        st.textContent = "리더보드에 등록됐어요. 아래 ‘리더보드 보기’에서 순위를 확인하세요.";
+        st.textContent = "리더보드에 등록됐어요. 아래 리더보드에서 순위를 확인하세요.";
         loadLeaderboard();
         resultLbLoaded = false;
-        setResultLbOpen(true);
+        loadResultLeaderboard();
       });
     } else {
       st.className = "lb-submit-status ok";
-      st.textContent = "리더보드에 등록됐어요. 아래 ‘리더보드 보기’에서 순위를 확인하세요.";
+      st.textContent = "리더보드에 등록됐어요. 아래 리더보드에서 순위를 확인하세요.";
       loadLeaderboard();
       resultLbLoaded = false;
-      setResultLbOpen(true);
+      loadResultLeaderboard();
     }
   }).catch(function(){
     btn.disabled = false;
@@ -1165,7 +1145,7 @@ function showResult(){
   $("lb-submit-box").classList.toggle("hidden", !hall);
   $("hall-cta-box").classList.toggle("hidden", hall);
   resultLbLoaded = false;
-  setResultLbOpen(false);
+  loadResultLeaderboard();
   if (hall) lbResetSubmit();
   $("btn-kakao").classList.toggle("hidden", !kakaoReady());
   var html = "";
@@ -1312,7 +1292,6 @@ $("lb-nickname").addEventListener("keydown", function(e){
   if (e.key === "Enter"){ e.preventDefault(); submitLeaderboard(); }
 });
 $("btn-lb-refresh").addEventListener("click", loadLeaderboard);
-$("btn-result-lb-toggle").addEventListener("click", function(){ setResultLbOpen(!resultLbOpen); });
 $("btn-result-lb-refresh").addEventListener("click", function(){ resultLbLoaded = false; loadResultLeaderboard(); });
 (function(){
   var homes = document.querySelectorAll(".btn-go-home");
