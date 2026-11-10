@@ -1216,10 +1216,16 @@ function showResult(){
     if (!reviewCard || !heroCard || !section) return;
     if (hall){
       if (lbBox) lbBox.classList.remove("hidden");
-      reviewCard.classList.remove("review-inside");
-      reviewCard.style.marginTop = "16px";
-      if (reviewCard.parentNode !== section){
-        section.insertBefore(reviewCard, heroCard.nextSibling);
+      /* 명예의 전당 순서: 공유/카톡/다시풀기(hero 상단) → 문제별 복기 → 닉네임 입력 → 리더보드 리스트 → 첫 화면으로 */
+      var lbSubmitBox = $("lb-submit-box");
+      var homeWrap = heroCard.querySelector(".result-home-inside");
+      reviewCard.classList.add("review-inside");
+      reviewCard.style.marginTop = "";
+      if (lbSubmitBox){
+        heroCard.insertBefore(reviewCard, lbSubmitBox);
+      }
+      if (lbBox && homeWrap){
+        heroCard.insertBefore(lbBox, homeWrap);
       }
       resultLbLoaded = false;
       loadResultLeaderboard();
