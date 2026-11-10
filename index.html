@@ -311,7 +311,6 @@
   .lb-meta{font-size:12px; color:var(--muted)}
   .lb-me{display:inline-block; background:var(--primary); color:#fff; font-size:11px; font-weight:700; border-radius:999px; padding:1px 7px; margin-left:6px; vertical-align:2px}
   .lb-score{font-weight:800; color:var(--ink); font-size:16px; flex:none; white-space:nowrap}
-  .lb-hints{font-size:11px; font-weight:600; color:var(--muted); margin-left:5px}
   .lb-status{font-size:14px; color:var(--muted); padding:14px 4px 6px}
   .lb-my-note{margin:12px 0 0; font-size:13px; color:var(--muted)}
   .lb-my-note b{color:var(--primary)}
@@ -548,7 +547,7 @@
             <span class="small" style="font-weight:700;color:var(--ink)">상위 10명</span>
             <button class="btn btn-ghost lb-refresh" id="btn-result-lb-refresh" type="button">새로고침</button>
           </div>
-          <p class="lb-sub">점수가 같으면 힌트를 적게 쓴 순서, 그다음 먼저 등록한 순서입니다.</p>
+          <p class="lb-sub">점수가 같으면 먼저 등록한 순서입니다.</p>
           <div class="lb-status" id="result-lb-status">순위를 불러오는 중입니다.</div>
           <div class="lb-list hidden" id="result-lb-list"></div>
           <p class="lb-my-note hidden" id="result-lb-my-note"></p>
@@ -1023,9 +1022,6 @@ function lbHints(row){
   var h = row ? row.hints_used : null;
   return (typeof h === "number" && isFinite(h) && h >= 0) ? Math.floor(h) : 0;
 }
-function lbHintText(n){
-  return n === 0 ? "힌트 사용 안함" : "힌트 " + n + "개 사용";
-}
 function renderLeaderboard(rows){
   var status = $("lb-status"), list = $("lb-list"), note = $("lb-my-note");
   var my = lbLoadMy();
@@ -1040,27 +1036,26 @@ function renderLeaderboard(rows){
   }
   var html = "";
   var bestMine = 0;
-  var bestMineHints = 0;
   rows.forEach(function(row, i){
     var meta = rankMetaByKey(row.rank_key, "hall");
     var title = meta ? meta.title : (row.rank_key || "");
     var mine = !!myIds[row.id];
-    if (mine && !bestMine){ bestMine = i + 1; bestMineHints = lbHints(row); }
+    if (mine && !bestMine){ bestMine = i + 1; }
     html += '<div class="lb-row' + (mine ? " mine" : "") + '">';
     html += '<span class="lb-pos' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>";
     html += '<div class="lb-main"><div class="lb-name">' + lbEscape(row.nickname) + (mine ? '<span class="lb-me">나</span>' : "") + '</div><div class="lb-meta">' + lbEscape(title) + " · " + lbDate(row.created_at) + "</div></div>";
-    html += '<span class="lb-score">' + row.score + '점<span class="lb-hints">' + lbHintText(lbHints(row)) + "</span></span>";
+    html += '<span class="lb-score">' + row.score + "점</span>";
     html += "</div>";
   });
   status.classList.add("hidden");
   list.classList.remove("hidden");
   list.innerHTML = html;
   if (bestMine){
-    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (" + lbHintText(bestMineHints) + ")";
+    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요.";
     note.classList.remove("hidden");
   } else if (my.last){
     var lm = rankMetaByKey(my.last.rank_key, "hall");
-    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", " + lbHintText(lbHints(my.last)) + ") · 아직 상위 10위에는 없어요.";
+    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ") · 아직 상위 10위에는 없어요.";
     note.classList.remove("hidden");
   } else {
     note.classList.add("hidden");
@@ -1101,27 +1096,26 @@ function renderResultLeaderboard(rows){
   }
   var html = "";
   var bestMine = 0;
-  var bestMineHints = 0;
   rows.forEach(function(row, i){
     var meta = rankMetaByKey(row.rank_key, "hall");
     var title = meta ? meta.title : (row.rank_key || "");
     var mine = !!myIds[row.id];
-    if (mine && !bestMine){ bestMine = i + 1; bestMineHints = lbHints(row); }
+    if (mine && !bestMine){ bestMine = i + 1; }
     html += '<div class="lb-row' + (mine ? " mine" : "") + '">';
     html += '<span class="lb-pos' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>";
     html += '<div class="lb-main"><div class="lb-name">' + lbEscape(row.nickname) + (mine ? '<span class="lb-me">나</span>' : "") + '</div><div class="lb-meta">' + lbEscape(title) + " · " + lbDate(row.created_at) + "</div></div>";
-    html += '<span class="lb-score">' + row.score + '점<span class="lb-hints">' + lbHintText(lbHints(row)) + "</span></span>";
+    html += '<span class="lb-score">' + row.score + "점</span>";
     html += "</div>";
   });
   status.classList.add("hidden");
   list.classList.remove("hidden");
   list.innerHTML = html;
   if (bestMine){
-    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요. (" + lbHintText(bestMineHints) + ")";
+    note.innerHTML = "내 기록이 <b>" + bestMine + "위</b>에 있어요.";
     note.classList.remove("hidden");
   } else if (my.last){
     var lm = rankMetaByKey(my.last.rank_key, "hall");
-    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ", " + lbHintText(lbHints(my.last)) + ") · 아직 상위 10위에는 없어요.";
+    note.innerHTML = "내 최근 기록은 <b>" + my.last.score + "점</b> (" + lbEscape(lm ? lm.title : "") + ") · 아직 상위 10위에는 없어요.";
     note.classList.remove("hidden");
   } else {
     note.classList.add("hidden");
